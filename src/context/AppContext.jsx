@@ -12,7 +12,8 @@ export function AppProvider({ children }) {
     QUERIES: 'ai_pbl_queries_v2',
     FAQS: 'ai_pbl_faqs_v2',
     FACULTY: 'ai_pbl_faculty_v2',
-    ROLE: 'ai_pbl_role_v2'
+    ROLE: 'ai_pbl_role_v2',
+    THEME: 'ai_pbl_theme_v2'
   };
 
   // Queries state
@@ -53,6 +54,36 @@ export function AppProvider({ children }) {
       return 'student';
     }
   });
+
+  // Theme state: 'light' or 'dark'
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.THEME);
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  });
+
+  // Keep DOM in sync with theme state immediately
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.THEME, theme);
+    } catch (e) {
+      console.error(e);
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Active Users
   const studentUser = {
@@ -261,7 +292,10 @@ export function AppProvider({ children }) {
         voteQueryFeedback,
         resetDemoData,
         mobileMenuOpen,
-        setMobileMenuOpen
+        setMobileMenuOpen,
+        theme,
+        setTheme,
+        toggleTheme
       }}
     >
       {children}

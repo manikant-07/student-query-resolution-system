@@ -8,7 +8,9 @@ import {
   Menu, 
   X, 
   ShieldAlert,
-  HelpCircle
+  HelpCircle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -21,7 +23,9 @@ export function Navbar() {
     queries, 
     resetDemoData, 
     mobileMenuOpen, 
-    setMobileMenuOpen 
+    setMobileMenuOpen,
+    theme,
+    toggleTheme
   } = useApp();
 
   const pendingCount = queries.filter(q => q.status === 'Pending').length;
@@ -29,13 +33,14 @@ export function Navbar() {
   return (
     <header
       style={{
-        background: 'rgba(255, 255, 255, 0.94)',
+        background: 'var(--bg-glass)',
         backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid var(--border)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        padding: '0.75rem 1.5rem'
+        padding: '0.75rem 1.5rem',
+        transition: 'background 200ms, border-color 200ms'
       }}
     >
       <div
@@ -56,7 +61,7 @@ export function Navbar() {
             style={{
               display: 'none',
               padding: '6px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               borderRadius: '8px',
               cursor: 'pointer'
             }}
@@ -83,16 +88,16 @@ export function Navbar() {
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', fontFamily: 'var(--font-heading)' }}>
+                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
                   Student Query Resolution System
                 </span>
                 <span
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: 700,
-                    background: '#eff6ff',
-                    color: '#2563eb',
-                    border: '1px solid #bfdbfe',
+                    background: 'var(--primary-light)',
+                    color: 'var(--primary)',
+                    border: '1px solid var(--primary-glow)',
                     padding: '2px 8px',
                     borderRadius: '999px',
                     textTransform: 'uppercase'
@@ -101,7 +106,7 @@ export function Navbar() {
                   AI Powered
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                 Ask Smarter. Resolve Faster. • College AI Project
               </p>
             </div>
@@ -112,13 +117,14 @@ export function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           {/* Role Switcher Pill */}
           <div
+            className="role-toggle-bar"
             style={{
-              background: '#f1f5f9',
+              background: 'var(--bg-subtle)',
               padding: '3px',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
-              border: '1px solid #e2e8f0'
+              border: '1px solid var(--border)'
             }}
           >
             <button
@@ -134,9 +140,9 @@ export function Navbar() {
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 150ms',
-                background: role === 'student' ? '#ffffff' : 'transparent',
-                color: role === 'student' ? '#2563eb' : '#64748b',
-                boxShadow: role === 'student' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                background: role === 'student' ? 'var(--bg-card)' : 'transparent',
+                color: role === 'student' ? 'var(--primary)' : 'var(--text-muted)',
+                boxShadow: role === 'student' ? 'var(--shadow-xs)' : 'none'
               }}
             >
               <GraduationCap size={15} />
@@ -155,9 +161,9 @@ export function Navbar() {
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 150ms',
-                background: role === 'faculty' ? '#ffffff' : 'transparent',
-                color: role === 'faculty' ? '#7c3aed' : '#64748b',
-                boxShadow: role === 'faculty' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                background: role === 'faculty' ? 'var(--bg-card)' : 'transparent',
+                color: role === 'faculty' ? 'var(--accent-purple)' : 'var(--text-muted)',
+                boxShadow: role === 'faculty' ? 'var(--shadow-xs)' : 'none'
               }}
             >
               <UserCheck size={15} />
@@ -178,6 +184,26 @@ export function Navbar() {
             </button>
           </div>
 
+          {/* Theme Switcher Button */}
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            className="theme-toggle-btn"
+            aria-label="Toggle Theme"
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun size={15} color="#f59e0b" style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.4))' }} />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon size={15} color="#4f46e5" />
+                <span>Dark</span>
+              </>
+            )}
+          </button>
+
           {/* User Persona Chip */}
           <div
             style={{
@@ -185,8 +211,8 @@ export function Navbar() {
               alignItems: 'center',
               gap: '0.6rem',
               padding: '0.35rem 0.8rem',
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '10px'
             }}
             className="persona-chip"
@@ -196,8 +222,8 @@ export function Navbar() {
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: role === 'student' ? '#eff6ff' : '#f5f3ff',
-                color: role === 'student' ? '#2563eb' : '#7c3aed',
+                background: role === 'student' ? 'var(--primary-light)' : 'var(--accent-purple-light)',
+                color: role === 'student' ? 'var(--primary)' : 'var(--accent-purple)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -208,10 +234,10 @@ export function Navbar() {
               {role === 'student' ? 'MK' : 'RS'}
             </div>
             <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0f172a' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {role === 'student' ? studentUser.name : facultyUser.name}
               </div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
                 {role === 'student' ? studentUser.roll : facultyUser.department}
               </div>
             </div>
@@ -222,7 +248,7 @@ export function Navbar() {
             onClick={resetDemoData}
             title="Reset to default queries & FAQs"
             className="btn btn-secondary btn-sm"
-            style={{ color: '#64748b', gap: '0.35rem' }}
+            style={{ color: 'var(--text-muted)', gap: '0.35rem' }}
           >
             <RotateCcw size={14} />
             <span style={{ fontSize: '0.775rem' }}>Reset Demo</span>

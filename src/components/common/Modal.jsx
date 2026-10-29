@@ -27,8 +27,8 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
       >
         <div className="modal-header">
           <div>
-            <h3 style={{ fontSize: '1.2rem', color: '#0f172a' }}>{title}</h3>
-            {subtitle && <p style={{ fontSize: '0.825rem', color: '#64748b', marginTop: '2px' }}>{subtitle}</p>}
+            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>{title}</h3>
+            {subtitle && <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '2px' }}>{subtitle}</p>}
           </div>
           <button
             onClick={onClose}

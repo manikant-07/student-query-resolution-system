@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar } from './components/common/Sidebar';
@@ -13,7 +13,7 @@ import { ArchitectureVivaPage } from './pages/ArchitectureVivaPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AppProvider>
         <div className="app-container">
           {/* Responsive Sidebar */}
@@ -39,6 +39,6 @@ export default function App() {
           <ToastContainer />
         </div>
       </AppProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

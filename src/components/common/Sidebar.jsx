@@ -77,14 +77,14 @@ export function Sidebar() {
         className={`sidebar-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}
         style={{
           width: '260px',
-          background: '#ffffff',
-          borderRight: '1px solid #e2e8f0',
+          background: 'var(--bg-card)',
+          borderRight: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '1.25rem 1rem',
           flexShrink: 0,
-          transition: 'transform 250ms ease-out',
+          transition: 'transform 250ms ease-out, background 200ms, border-color 200ms',
           zIndex: 45
         }}
       >
@@ -97,7 +97,7 @@ export function Sidebar() {
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
-                color: '#94a3b8',
+                color: 'var(--text-muted)',
                 padding: '0 0.75rem',
                 marginBottom: '0.5rem'
               }}
@@ -121,9 +121,9 @@ export function Sidebar() {
                     fontWeight: 600,
                     textDecoration: 'none',
                     transition: 'all 150ms',
-                    background: isActive ? 'linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)' : 'transparent',
-                    color: isActive ? '#1d4ed8' : '#475569',
-                    border: isActive ? '1px solid #bfdbfe' : '1px solid transparent'
+                    background: isActive ? 'var(--primary-light)' : 'transparent',
+                    color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isActive ? '1px solid var(--primary-glow)' : '1px solid transparent'
                   })}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -137,8 +137,8 @@ export function Sidebar() {
                         fontWeight: 700,
                         padding: '2px 7px',
                         borderRadius: '999px',
-                        background: item.badgeColor || '#eff6ff',
-                        color: item.badgeColor ? '#ffffff' : '#2563eb'
+                        background: item.badgeColor || 'var(--primary-light)',
+                        color: item.badgeColor ? '#ffffff' : 'var(--primary)'
                       }}
                     >
                       {item.badge}
@@ -152,30 +152,30 @@ export function Sidebar() {
           {/* Section: Live Query Pipeline Status */}
           <div
             style={{
-              background: '#f8fafc',
+              background: 'var(--bg-subtle)',
               borderRadius: '12px',
               padding: '1rem',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               marginTop: '1rem'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
-              <Layers size={16} color="#2563eb" />
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e293b' }}>Query Pipeline Status</span>
+              <Layers size={16} color="var(--primary)" />
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>Query Pipeline Status</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.785rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                 <span>Pending Review</span>
-                <span style={{ fontWeight: 700, color: '#d97706' }}>{pendingCount}</span>
+                <span style={{ fontWeight: 700, color: '#f59e0b' }}>{pendingCount}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                 <span>Faculty Answered</span>
-                <span style={{ fontWeight: 700, color: '#2563eb' }}>{answeredCount}</span>
+                <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{answeredCount}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                 <span>Fully Resolved</span>
-                <span style={{ fontWeight: 700, color: '#16a34a' }}>{resolvedCount}</span>
+                <span style={{ fontWeight: 700, color: 'var(--success)' }}>{resolvedCount}</span>
               </div>
             </div>
           </div>
@@ -184,18 +184,18 @@ export function Sidebar() {
         {/* Section: Project AI Attribution */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
-            border: '1px solid #bbf7d0',
+            background: 'var(--success-light)',
+            border: '1px solid var(--border)',
             borderRadius: '12px',
             padding: '0.85rem',
             textAlign: 'center'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: '#166534', fontWeight: 700, fontSize: '0.8rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--success)', fontWeight: 700, fontSize: '0.8rem' }}>
             <Sparkles size={15} />
             <span>AI Modules Verified</span>
           </div>
-          <p style={{ fontSize: '0.72rem', color: '#15803d', marginTop: '4px' }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
             Modules 1, 2, 3 & 4 executable algorithms loaded client-side.
           </p>
         </div>

@@ -22,16 +22,16 @@ export function ToastContainer() {
       }}
     >
       {toasts.map(toast => {
-        let bg = '#ffffff';
-        let border = '#e2e8f0';
-        let icon = <Info size={18} color="#2563eb" />;
+        let bg = 'var(--bg-card)';
+        let border = 'var(--border)';
+        let icon = <Info size={18} color="var(--primary)" />;
 
         if (toast.type === 'success') {
-          border = '#86efac';
-          icon = <CheckCircle2 size={18} color="#16a34a" />;
+          border = '#10b981';
+          icon = <CheckCircle2 size={18} color="#10b981" />;
         } else if (toast.type === 'error' || toast.type === 'warning') {
-          border = '#fca5a5';
-          icon = <AlertCircle size={18} color="#dc2626" />;
+          border = '#ef4444';
+          icon = <AlertCircle size={18} color="#ef4444" />;
         }
 
         return (
@@ -41,14 +41,14 @@ export function ToastContainer() {
               background: bg,
               borderRadius: '12px',
               padding: '0.85rem 1rem',
-              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.15)',
+              boxShadow: 'var(--shadow-xl)',
               border: `1px solid ${border}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '0.75rem',
               fontSize: '0.875rem',
-              color: '#1e293b',
+              color: 'var(--text-primary)',
               animation: 'slideUp 200ms ease-out'
             }}
           >

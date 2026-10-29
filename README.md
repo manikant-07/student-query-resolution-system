@@ -44,6 +44,22 @@ npm run build
 npm run preview
 ```
 
+### 🔄 1-Click GitHub Sync & Live Website Auto-Deployment
+Whenever you make changes to the code or project:
+1. Double click **`sync_github.bat`** (or run `git push origin main`).
+2. It automatically stages all changes, creates a commit, and pushes to GitHub.
+3. **GitHub Actions** (`.github/workflows/deploy.yml`) triggers automatically, builds the latest code, and updates your live website in ~1 minute!
+4. **Live Website URL:** `https://manikant-07.github.io/student-query-resolution-system/`
+
+> **Note on GitHub Pages Setup:**
+> In your GitHub Repository:
+> Go to **Settings** ➔ **Pages** ➔ Under **Build and deployment**, select **Source:** `GitHub Actions`.
+
+### 🌗 Dark & Light Mode Theme Support
+- Includes a built-in Dark / Light theme toggle in the header navbar.
+- Automatically respects system preferences (`prefers-color-scheme`) and persists user choices to `localStorage`.
+- High-contrast accessible color palette for both dark navy and crisp light modes.
+
 ---
 
 ## 🛠️ 3. Technology Stack
