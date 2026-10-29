@@ -1,14 +1,14 @@
 export const facultyList = [
   {
     id: "FAC-01",
-    name: "Prof. Rajesh Sharma",
+    name: "Prof. Roshni Prasad",
     role: "Senior Professor & HOD",
     department: "Artificial Intelligence & Data Science",
     subjects: ["Artificial Intelligence", "Machine Learning Lab", "Deep Learning"],
     maxLoad: 5,
     currentLoad: 2,
     available: true,
-    email: "rajesh.sharma@college.edu",
+    email: "roshni.prasad@college.edu",
     avatarColor: "#2563eb"
   },
   {

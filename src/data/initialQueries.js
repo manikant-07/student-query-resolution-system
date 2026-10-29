@@ -1,7 +1,7 @@
 export const initialQueries = [
   {
     id: "QRY-1001",
-    studentName: "Manikant Kumar",
+    studentName: "Manikant Rajpoot",
     studentRoll: "23AI-104",
     email: "manikant.ai@college.edu",
     subject: "Attendance Shortage in Advanced AI & ML Lab",
@@ -11,7 +11,7 @@ export const initialQueries = [
     status: "Pending",
     tags: ["attendance", "medical-leave", "ai-lab", "exam-eligibility"],
     createdAt: "2026-10-24T09:30:00Z",
-    assignedTo: "Prof. Rajesh Sharma",
+    assignedTo: "Prof. Roshni Prasad",
     assignedDept: "Artificial Intelligence & Data Science",
     suggestedAnswer: "According to College Academic Policy (Rule AC-104), students with attendance between 65% and 74% with valid registered medical documents are eligible to submit a Condonation Application to the Dean of Academics before the 5th working day prior to exams.",
     certaintyScore: 0.92,
@@ -20,7 +20,7 @@ export const initialQueries = [
     replies: [
       {
         id: "rep-1",
-        author: "Prof. Rajesh Sharma",
+        author: "Prof. Roshni Prasad",
         role: "Faculty",
         message: "Hello Manikant, please submit your original hospital discharge slip and fitness certificate to Room 204 (Academic Cell) by tomorrow 2:00 PM. We will review your condonation request.",
         timestamp: "2026-10-25T11:15:00Z"
@@ -30,9 +30,9 @@ export const initialQueries = [
   },
   {
     id: "QRY-1002",
-    studentName: "Ananya Sharma",
+    studentName: "Deep Kumar",
     studentRoll: "23CS-042",
-    email: "ananya.cs@college.edu",
+    email: "deep.cs@college.edu",
     subject: "Exam Hall Ticket Download Error on Student Portal",
     category: "Exams",
     description: "When clicking 'Download Admit Card' for Semester 4 Mid-Term Examinations, the portal gives 'Error 403: Financial Clearance Required', despite my semester tuition fees being paid on Oct 10th with transaction ID TXN-98421.",
@@ -59,9 +59,9 @@ export const initialQueries = [
   },
   {
     id: "QRY-1003",
-    studentName: "Rohan Verma",
+    studentName: "Saksham Naagar",
     studentRoll: "23IT-088",
-    email: "rohan.it@college.edu",
+    email: "saksham.it@college.edu",
     subject: "Clash in Mid-Term Timetable for Elective - Cloud Computing & AI",
     category: "Timetable",
     description: "The timetable published yesterday schedules 'Cloud Computing Elective' and 'Artificial Intelligence Core' in Slot 3 on Wednesday, 10:00 AM. Several 3rd semester IT students have opted for both courses.",
@@ -88,9 +88,9 @@ export const initialQueries = [
   },
   {
     id: "QRY-1004",
-    studentName: "Sneha Patel",
+    studentName: "Harsh Shishodia",
     studentRoll: "23EE-019",
-    email: "sneha.ee@college.edu",
+    email: "harsh.ee@college.edu",
     subject: "Installment Fee Payment Request for Even Semester",
     category: "Fees",
     description: "Requesting permission to pay the remaining semester tuition balance in two installments due to family agricultural harvest delay. First installment of ₹25,000 paid already.",
@@ -117,9 +117,9 @@ export const initialQueries = [
   },
   {
     id: "QRY-1005",
-    studentName: "Aditya Joshi",
+    studentName: "Sahil Bansal",
     studentRoll: "23EC-071",
-    email: "aditya.ec@college.edu",
+    email: "sahil.ec@college.edu",
     subject: "Wi-Fi Authentication Failure in Hostel Block B",
     category: "Technical",
     description: "Campus 802.1x Enterprise Wi-Fi shows 'Radius Authentication Timed Out' on 2nd and 3rd floors of Hostel Block B since maintenance updates on Friday evening.",
@@ -146,9 +146,9 @@ export const initialQueries = [
   },
   {
     id: "QRY-1006",
-    studentName: "Kavya Menon",
+    studentName: "Saurabh",
     studentRoll: "23ME-053",
-    email: "kavya.me@college.edu",
+    email: "saurabh.me@college.edu",
     subject: "Re-evaluation Grade Change not Reflected in Transcript",
     category: "Exams",
     description: "My re-evaluation result for Thermodynamics (ME-301) was upgraded from Grade 'C' to Grade 'B+' on Oct 5th, but the provisional grade card still shows the old grade.",

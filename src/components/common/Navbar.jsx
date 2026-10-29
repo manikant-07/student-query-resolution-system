@@ -231,7 +231,7 @@ export function Navbar() {
                 fontSize: '0.75rem'
               }}
             >
-              {role === 'student' ? 'MK' : 'RS'}
+              {role === 'student' ? 'MR' : 'RP'}
             </div>
             <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
               <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>

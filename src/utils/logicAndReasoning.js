@@ -54,21 +54,21 @@ export function generateTruthTable(operator = "IMPLIES") {
  * 2. First-Order Logic (FOL) Knowledge Base
  */
 export const folKnowledgeBase = {
-  students: ["Manikant", "Ananya", "Rohan"],
+  students: ["Manikant", "Deep", "Saksham"],
   courses: ["CS-201 (AI)", "CS-202 (DSA)", "CS-203 (DBMS)"],
-  faculty: ["Prof. Rajesh Sharma", "Dr. Vikram Seth", "Prof. Priya Nair"],
+  faculty: ["Prof. Roshni Prasad", "Dr. Vikram Seth", "Prof. Priya Nair"],
 
   // Predicates: Enrolled(Student, Course)
   enrollments: [
     { student: "Manikant", course: "CS-201 (AI)", attendance: 68 },
     { student: "Manikant", course: "CS-202 (DSA)", attendance: 82 },
-    { student: "Ananya", course: "CS-201 (AI)", attendance: 85 },
-    { student: "Rohan", course: "CS-203 (DBMS)", attendance: 71 }
+    { student: "Deep", course: "CS-201 (AI)", attendance: 85 },
+    { student: "Saksham", course: "CS-203 (DBMS)", attendance: 71 }
   ],
 
   // Predicate: Teaches(Faculty, Course)
   teaches: [
-    { faculty: "Prof. Rajesh Sharma", course: "CS-201 (AI)" },
+    { faculty: "Prof. Roshni Prasad", course: "CS-201 (AI)" },
     { faculty: "Dr. Vikram Seth", course: "CS-202 (DSA)" },
     { faculty: "Prof. Priya Nair", course: "CS-203 (DBMS)" }
   ],
@@ -97,7 +97,7 @@ export const semanticNetworkData = {
     { id: "Course", label: "Course Entity", type: "class", description: "Departmental Subject" },
     { id: "CS201", label: "Course: CS-201 (AI)", type: "instance", description: "AI & ML Theory & Lab" },
     { id: "Faculty", label: "Faculty Entity", type: "class", description: "Academic mentor and resolver" },
-    { id: "ProfSharma", label: "Prof. Rajesh Sharma", type: "instance", description: "HOD AI & Data Science" },
+    { id: "ProfPrasad", label: "Prof. Roshni Prasad", type: "instance", description: "HOD AI & Data Science" },
     { id: "Department", label: "Department: AI & DS", type: "instance", description: "Hosting department" },
     { id: "Answer", label: "Condonation Policy Form AC-4", type: "instance", description: "Verified institutional resolution" }
   ],
@@ -107,10 +107,10 @@ export const semanticNetworkData = {
     { from: "Manikant", to: "QRY-1001", relation: "SUBMITS" },
     { from: "QRY-1001", to: "CS201", relation: "REGARDS_COURSE" },
     { from: "CS201", to: "Course", relation: "IS-A" },
-    { from: "ProfSharma", to: "CS201", relation: "TEACHES" },
-    { from: "ProfSharma", to: "Faculty", relation: "IS-A" },
-    { from: "ProfSharma", to: "Department", relation: "BELONGS_TO" },
-    { from: "ProfSharma", to: "QRY-1001", relation: "ASSIGNED_TO_RESOLVE" },
+    { from: "ProfPrasad", to: "CS201", relation: "TEACHES" },
+    { from: "ProfPrasad", to: "Faculty", relation: "IS-A" },
+    { from: "ProfPrasad", to: "Department", relation: "BELONGS_TO" },
+    { from: "ProfPrasad", to: "QRY-1001", relation: "ASSIGNED_TO_RESOLVE" },
     { from: "QRY-1001", to: "Answer", relation: "RESOLVED_BY" }
   ]
 };
@@ -141,7 +141,7 @@ export const academicFrames = {
     name: "Instance: QRY-1001 (Attendance Condonation)",
     slots: [
       { slot: "Instance-Of", value: "QueryFrame", facet: "Specialization" },
-      { slot: "Submitter", value: "Manikant Kumar (23AI-104)", facet: "Filled Slot" },
+      { slot: "Submitter", value: "Manikant Rajpoot (23AI-104)", facet: "Filled Slot" },
       { slot: "Category", value: "Attendance", facet: "Filled Slot" },
       { slot: "Current-Attendance", value: "68%", facet: "Filled Slot" },
       { slot: "Action-Rule", value: "RULE_ATTENDANCE_MEDICAL_CONDONATION", facet: "Inferred Slot" }

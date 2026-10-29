@@ -9,10 +9,10 @@ const AppContext = createContext();
 export function AppProvider({ children }) {
   // LocalStorage keys
   const STORAGE_KEYS = {
-    QUERIES: 'ai_pbl_queries_v2',
-    FAQS: 'ai_pbl_faqs_v2',
-    FACULTY: 'ai_pbl_faculty_v2',
-    ROLE: 'ai_pbl_role_v2',
+    QUERIES: 'ai_pbl_queries_v3',
+    FAQS: 'ai_pbl_faqs_v3',
+    FACULTY: 'ai_pbl_faculty_v3',
+    ROLE: 'ai_pbl_role_v3',
     THEME: 'ai_pbl_theme_v2'
   };
 
@@ -87,7 +87,7 @@ export function AppProvider({ children }) {
 
   // Active Users
   const studentUser = {
-    name: "Manikant Kumar",
+    name: "Manikant Rajpoot",
     roll: "23AI-104",
     email: "manikant.ai@college.edu",
     branch: "Artificial Intelligence & Data Science",
@@ -95,10 +95,10 @@ export function AppProvider({ children }) {
   };
 
   const facultyUser = {
-    name: "Prof. Rajesh Sharma",
+    name: "Prof. Roshni Prasad",
     role: "Senior Professor & HOD",
     department: "Artificial Intelligence & Data Science",
-    email: "rajesh.sharma@college.edu"
+    email: "roshni.prasad@college.edu"
   };
 
   // UI States

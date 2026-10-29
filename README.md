@@ -76,12 +76,12 @@ Whenever you make changes to the code or project:
 ## 👥 4. Demo Roles & Personas
 A quick role switcher is embedded directly into the navigation header:
 - **Student Persona:**  
-  - Name: **Manikant Kumar**  
+  - Name: **Manikant Rajpoot**  
   - Roll No: **23AI-104**  
   - Branch: Artificial Intelligence & Data Science (2nd Year)  
   - Access: Submit queries with real-time AI suggestions, track query history, vote on answers (Helpful / Not Helpful), browse searchable FAQs.
 - **Faculty Persona:**  
-  - Name: **Prof. Rajesh Sharma**  
+  - Name: **Prof. Roshni Prasad**  
   - Title: Senior Professor & HOD, AI & Data Science  
   - Access: Query inbox triage, official response writer with AI prefill template, status transitions (Pending → Answered → Resolved), Automated CSP Assignment Engine, and Recharts analytics.
 
