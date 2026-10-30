@@ -13,7 +13,10 @@ import {
   HelpCircle, 
   Zap, 
   AlertCircle,
-  BookOpen
+  BookOpen,
+  Paperclip,
+  FileText,
+  X
 } from 'lucide-react';
 
 export function SubmitQueryModal({ isOpen, onClose }) {
@@ -27,6 +30,8 @@ export function SubmitQueryModal({ isOpen, onClose }) {
     tags: ''
   });
 
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [fileError, setFileError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Real-time AI suggestions
@@ -43,7 +48,33 @@ export function SubmitQueryModal({ isOpen, onClose }) {
     };
   }, [formData, faqs]);
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (e) => {
+    setFileError('');
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check size limit: 10MB
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setFileError('File size must be 10 MB or less.');
+      return;
+    }
+
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      setFileError('Only PDF, JPG, JPEG, and PNG files are allowed.');
+      return;
+    }
+
+    setAttachmentFile(file);
+  };
+
+  const handleRemoveFile = () => {
+    setAttachmentFile(null);
+    setFileError('');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.subject.trim() || !formData.description.trim()) {
       alert("Please provide both a subject and a description for your query.");
@@ -51,17 +82,16 @@ export function SubmitQueryModal({ isOpen, onClose }) {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
       const tagList = formData.tags
         ? formData.tags.split(',').map(t => t.trim()).filter(Boolean)
         : [formData.category.toLowerCase()];
 
-      submitQuery({
+      await submitQuery({
         ...formData,
         tags: tagList
-      });
+      }, attachmentFile);
 
-      setIsSubmitting(false);
       setFormData({
         subject: '',
         category: 'Attendance',
@@ -69,8 +99,14 @@ export function SubmitQueryModal({ isOpen, onClose }) {
         description: '',
         tags: ''
       });
+      setAttachmentFile(null);
       onClose();
-    }, 400);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Error submitting query. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -140,6 +176,77 @@ export function SubmitQueryModal({ isOpen, onClose }) {
             required
             rows={4}
           />
+        </div>
+
+        {/* Document Upload Section */}
+        <div className="form-group">
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Paperclip size={14} />
+            <span>Upload Supporting Documents (Optional)</span>
+          </label>
+          <div
+            style={{
+              border: '2px dashed var(--border)',
+              borderRadius: '10px',
+              padding: '1rem',
+              textAlign: 'center',
+              background: 'var(--bg-subtle)',
+              cursor: 'pointer',
+              position: 'relative',
+            }}
+          >
+            {attachmentFile ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <FileText size={20} color="var(--primary)" />
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {attachmentFile.name}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      {(attachmentFile.size / 1024 / 1024).toFixed(2)} MB • {attachmentFile.type}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="btn btn-sm btn-ghost"
+                  style={{ color: 'var(--danger)' }}
+                >
+                  <X size={16} />
+                  <span>Remove</span>
+                </button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="file"
+                  id="query-attachment-input"
+                  accept=".pdf,image/png,image/jpeg,image/jpg"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+                <label
+                  htmlFor="query-attachment-input"
+                  style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <Paperclip size={24} color="var(--primary)" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Click to attach medical slip, payment receipt, or hall ticket screenshot
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    Supported formats: PDF, JPG, PNG (Max 10 MB)
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
+          {fileError && (
+            <p style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '0.35rem' }}>
+              {fileError}
+            </p>
+          )}
         </div>
 
         {/* Tags */}

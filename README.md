@@ -62,18 +62,60 @@ Whenever you make changes to the code or project:
 
 ---
 
-## 🛠️ 3. Technology Stack
+## 🛠️ 3. Full-Stack Technology Stack
 - **Frontend Framework:** React 19 with Vite
-- **Routing:** React Router v7 (`react-router-dom`)
-- **Icons:** Lucide React (`lucide-react`)
+- **Routing:** React Router v7 (`react-router-dom` with HashRouter & SPA rewrites)
+- **Backend & Database:** Supabase (PostgreSQL with Row Level Security - RLS)
+- **Authentication:** Supabase Auth (Student, Faculty, Admin roles; bcrypt-secured JWT sessions)
+- **Document Storage:** Supabase Storage (`query-attachments` bucket for PDF & images)
 - **Visual Analytics & Charts:** Recharts (`recharts`)
-- **Styling:** Custom Vanilla CSS Design System with glassmorphism, responsive utilities, and mobile drawer (`src/index.css`)
-- **Data Persistence:** Browser LocalStorage (persists queries, replies, feedback votes, and faculty workloads; includes a **"Reset Demo Data"** button in the navbar)
-- **Language:** JavaScript throughout (zero external AI API keys or mock delays required)
+- **Icons:** Lucide React (`lucide-react`)
+- **Styling:** Custom Design System with glassmorphism, responsive utilities, and Dark/Light modes (`src/index.css`)
+- **Deployment:** Vercel (Frontend) & Supabase (Backend/Database)
 
 ---
 
-## 👥 4. Demo Roles & Personas
+## 🗄️ 4. Supabase Database Schema & Setup
+
+### Database Tables Created:
+1. **`profiles`**: Linked to `auth.users`, holds `full_name`, `email`, `enrollment_number`, `department`, `semester`, and `role` (`student`, `faculty`, `admin`).
+2. **`faculty`**: Holds academic advisor records, departments, specializations, workload tracking (`current_workload` / `maximum_workload`), and availability for CSP dispatch.
+3. **`knowledge_rules`**: Expert system rules evaluated against student query submissions (`rule_code`, `category`, `condition`, `suggestion`, `confidence_score`, `is_active`).
+4. **`queries`**: Core academic inquiries (`query_number`, `student_id`, `title`, `description`, `category`, `priority`, `status`, `assigned_faculty_id`, `ai_suggestion`, `confidence_score`, `matched_rule`, `tags`).
+5. **`query_responses`**: Official faculty replies, directives, and resolution messages.
+6. **`query_attachments`**: Metadata for uploaded medical certificates, fee receipts, or hall tickets stored in Supabase Storage.
+7. **`query_status_history`**: Complete lifecycle audit trail for every status transition (Pending ➔ Answered ➔ Resolved).
+8. **`notifications`**: Real-time notification logs delivered to students and faculty.
+
+### ⚡ 1-Click Database Setup (in Supabase):
+1. Create a free project at [supabase.com](https://supabase.com/).
+2. Open your project dashboard and navigate to **SQL Editor** in the left menu.
+3. Open [`supabase/schema.sql`](supabase/schema.sql) in this repository, copy its entire contents, paste them into the Supabase SQL Editor, and click **Run**.
+4. All 8 tables, sequences, triggers, storage bucket policies, and default knowledge rules will be generated instantly.
+
+### 🔑 Environment Variables Setup:
+1. In your Supabase Dashboard, go to **Project Settings** ➔ **API**.
+2. Copy your **Project URL** and **anon public Key**.
+3. Create a `.env` file in the root of this project (see `.env.example`):
+   ```env
+   VITE_SUPABASE_URL=https://your-project-id.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+   ```
+
+---
+
+## ☁️ 5. Vercel Deployment Guide
+1. Push your repository to GitHub.
+2. Go to [vercel.com](https://vercel.com/) and click **Add New** ➔ **Project**.
+3. Import your `student-query-resolution-system` repository.
+4. Under **Environment Variables**, add:
+   - `VITE_SUPABASE_URL` = your Supabase URL
+   - `VITE_SUPABASE_ANON_KEY` = your Supabase anon key
+5. Click **Deploy**. Vercel will automatically build the project using [`vercel.json`](vercel.json) single-page application rewrites.
+
+---
+
+## 👥 6. System Roles & Protected Dashboards
 A quick role switcher is embedded directly into the navigation header:
 - **Student Persona:**  
   - Name: **Manikant Rajpoot**  

@@ -4,24 +4,30 @@ import {
   Sparkles, 
   UserCheck, 
   GraduationCap, 
-  RotateCcw, 
+  ShieldCheck,
   Menu, 
   X, 
-  ShieldAlert,
-  HelpCircle,
-  Sun,
-  Moon
+  Sun, 
+  Moon,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
+  const navigate = useNavigate();
   const { 
     role, 
     setRole, 
     studentUser, 
     facultyUser, 
+    currentUser,
+    userProfile,
+    logout,
+    openAuthModal,
     queries, 
-    resetDemoData, 
     mobileMenuOpen, 
     setMobileMenuOpen,
     theme,
@@ -66,6 +72,7 @@ export function Navbar() {
               cursor: 'pointer'
             }}
             id="mobile-nav-toggle"
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -114,7 +121,7 @@ export function Navbar() {
         </div>
 
         {/* Action Controls & Role Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {/* Role Switcher Pill */}
           <div
             className="role-toggle-bar"
@@ -128,15 +135,18 @@ export function Navbar() {
             }}
           >
             <button
-              onClick={() => setRole('student')}
+              onClick={() => {
+                setRole('student');
+                navigate('/student');
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.4rem 0.85rem',
+                gap: '0.35rem',
+                padding: '0.35rem 0.75rem',
                 borderRadius: '9px',
                 border: 'none',
-                fontSize: '0.825rem',
+                fontSize: '0.8rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 150ms',
@@ -146,18 +156,21 @@ export function Navbar() {
               }}
             >
               <GraduationCap size={15} />
-              <span>Student Mode</span>
+              <span>Student</span>
             </button>
             <button
-              onClick={() => setRole('faculty')}
+              onClick={() => {
+                setRole('faculty');
+                navigate('/faculty');
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.4rem 0.85rem',
+                gap: '0.35rem',
+                padding: '0.35rem 0.75rem',
                 borderRadius: '9px',
                 border: 'none',
-                fontSize: '0.825rem',
+                fontSize: '0.8rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 150ms',
@@ -167,7 +180,7 @@ export function Navbar() {
               }}
             >
               <UserCheck size={15} />
-              <span>Faculty Mode</span>
+              <span>Faculty</span>
               {pendingCount > 0 && (
                 <span
                   style={{
@@ -175,14 +188,41 @@ export function Navbar() {
                     color: '#fff',
                     borderRadius: '50%',
                     padding: '1px 5px',
-                    fontSize: '0.65rem'
+                    fontSize: '0.62rem'
                   }}
                 >
                   {pendingCount}
                 </span>
               )}
             </button>
+            <button
+              onClick={() => {
+                setRole('admin');
+                navigate('/admin');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '9px',
+                border: 'none',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 150ms',
+                background: role === 'admin' ? 'var(--bg-card)' : 'transparent',
+                color: role === 'admin' ? '#4338ca' : 'var(--text-muted)',
+                boxShadow: role === 'admin' ? 'var(--shadow-xs)' : 'none'
+              }}
+            >
+              <ShieldCheck size={15} />
+              <span>Admin</span>
+            </button>
           </div>
+
+          {/* Real-time Notifications Bell */}
+          <NotificationBell />
 
           {/* Theme Switcher Button */}
           <button
@@ -192,67 +232,83 @@ export function Navbar() {
             aria-label="Toggle Theme"
           >
             {theme === 'dark' ? (
-              <>
-                <Sun size={15} color="#f59e0b" style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.4))' }} />
-                <span>Light</span>
-              </>
+              <Sun size={15} color="#f59e0b" style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.4))' }} />
             ) : (
-              <>
-                <Moon size={15} color="#4f46e5" />
-                <span>Dark</span>
-              </>
+              <Moon size={15} color="#4f46e5" />
             )}
           </button>
 
-          {/* User Persona Chip */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.6rem',
-              padding: '0.35rem 0.8rem',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '10px'
-            }}
-            className="persona-chip"
-          >
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: role === 'student' ? 'var(--primary-light)' : 'var(--accent-purple-light)',
-                color: role === 'student' ? 'var(--primary)' : 'var(--accent-purple)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.75rem'
-              }}
-            >
-              {role === 'student' ? 'MR' : 'RP'}
-            </div>
-            <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {role === 'student' ? studentUser.name : facultyUser.name}
+          {/* User Status: Logged in Persona or Sign In CTA */}
+          {currentUser ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.35rem 0.75rem',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px'
+                }}
+                className="persona-chip"
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: role === 'student' ? 'var(--primary-light)' : role === 'admin' ? '#e0e7ff' : 'var(--accent-purple-light)',
+                    color: role === 'student' ? 'var(--primary)' : role === 'admin' ? '#4338ca' : 'var(--accent-purple)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  {userProfile?.full_name ? userProfile.full_name.charAt(0) : 'U'}
+                </div>
+                <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {userProfile?.full_name || currentUser.email}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    {role.toUpperCase()} • {userProfile?.enrollment_number || 'Verified'}
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                {role === 'student' ? studentUser.roll : facultyUser.department}
-              </div>
-            </div>
-          </div>
 
-          {/* Reset Demo Data Button */}
-          <button
-            onClick={resetDemoData}
-            title="Reset to default queries & FAQs"
-            className="btn btn-secondary btn-sm"
-            style={{ color: 'var(--text-muted)', gap: '0.35rem' }}
-          >
-            <RotateCcw size={14} />
-            <span style={{ fontSize: '0.775rem' }}>Reset Demo</span>
-          </button>
+              <button
+                onClick={logout}
+                title="Sign out of portal"
+                className="btn btn-secondary btn-sm"
+                style={{ color: 'var(--danger)', borderColor: 'var(--border)' }}
+              >
+                <LogOut size={14} />
+                <span className="btn-text-responsive">Logout</span>
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <button
+                onClick={() => openAuthModal('login')}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: '0.35rem' }}
+              >
+                <LogIn size={14} />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => openAuthModal('register')}
+                className="btn btn-primary btn-sm"
+                style={{ gap: '0.35rem' }}
+              >
+                <User size={14} />
+                <span>Register</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -263,6 +319,9 @@ export function Navbar() {
           }
           .persona-chip {
             display: none !important;
+          }
+          .btn-text-responsive {
+            display: none;
           }
         }
       `}</style>

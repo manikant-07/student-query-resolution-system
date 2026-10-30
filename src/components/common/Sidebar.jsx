@@ -5,6 +5,7 @@ import {
   Home, 
   GraduationCap, 
   Users, 
+  ShieldCheck,
   Cpu, 
   BookOpen, 
   MessageSquareCheck,
@@ -40,6 +41,13 @@ export function Sidebar() {
       icon: <Users size={19} />,
       badge: pendingCount > 0 ? `${pendingCount} new` : null,
       badgeColor: '#ef4444'
+    },
+    {
+      to: "/admin",
+      label: "Admin Governance",
+      icon: <ShieldCheck size={19} />,
+      badge: "Full Control",
+      badgeColor: '#4338ca'
     },
     {
       to: "/ai-lab",
