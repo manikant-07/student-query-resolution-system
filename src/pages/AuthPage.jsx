@@ -18,7 +18,8 @@ import {
   Sparkles,
   KeyRound,
   ShieldCheck,
-  GraduationCap
+  GraduationCap,
+  Send
 } from 'lucide-react';
 
 export function AuthPage() {
@@ -774,3 +775,4 @@ export function AuthPage() {
     </div>
   );
 }
+

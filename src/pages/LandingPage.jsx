@@ -29,6 +29,7 @@ import {
   Share2,
   ChevronDown,
   ChevronUp,
+  PlusCircle,
   Globe,
   Mail
 } from 'lucide-react';

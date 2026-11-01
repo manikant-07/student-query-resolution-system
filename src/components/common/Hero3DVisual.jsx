@@ -147,3 +147,4 @@ export function Hero3DVisual() {
     </div>
   );
 }
+

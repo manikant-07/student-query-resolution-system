@@ -321,3 +321,4 @@ export function NotificationsPage() {
     </div>
   );
 }
+

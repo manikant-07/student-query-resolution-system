@@ -20,7 +20,8 @@ import {
   CheckCircle2, 
   HelpCircle,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 
 export function AskQueryPage() {
@@ -531,3 +532,4 @@ export function AskQueryPage() {
     </div>
   );
 }
+
