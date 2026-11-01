@@ -104,7 +104,72 @@ Whenever you make changes to the code or project:
 
 ---
 
-## ☁️ 5. Vercel Deployment Guide
+## 🔐 4.5 Real Google Authentication & Firebase Firestore Setup
+
+This application features complete **Google Authentication** via Firebase Auth and Cloud Firestore:
+- **"Continue with Google" Sign-In**: Users can authenticate in 1 click using their institutional or personal Google accounts (`signInWithPopup`).
+- **Automatic Identity Retrieval**: Automatically captures Full Name, Email, Google Profile Photo (`photoURL`), and unique UID.
+- **First-Time Profile Onboarding**: Automatically prompts first-time Google sign-ins with an onboarding modal to collect enrollment/employee number, department, course, and semester.
+- **Persistent Sessions**: Users stay signed in across browser tab refreshes (`onAuthStateChanged` + browser persistence).
+- **Strict User Privacy**: Students can view only their own inquiries; unauthorized cross-user query access is blocked client-side and at the Firestore rules level.
+- **Real User Identity**: Replaces static/dummy personas with the authenticated user's real name and Google avatar in the Navbar and Dashboards.
+
+### ⚡ Step-by-Step Firebase Setup Instructions:
+
+#### Step 1: Create a Project in Firebase Console
+1. Visit the [Firebase Console](https://console.firebase.google.com/) and click **Add project**.
+2. Name your project (e.g. `student-query-resolution-portal`) and click **Continue**.
+3. (Optional) Disable Google Analytics or leave it enabled, then click **Create project**.
+
+#### Step 2: Register Web Application
+1. On your Firebase Project Overview page, click the **Web icon (`</>`)**.
+2. Give your app a nickname (e.g. `Student Portal Web`) and click **Register app**.
+3. Firebase will display your `firebaseConfig` keys (`apiKey`, `authDomain`, `projectId`, etc.). Keep these handy for your `.env` file.
+
+#### Step 3: Enable Google Authentication Provider
+1. In the left navigation menu, click **Build** ➔ **Authentication**.
+2. Click **Get Started**, then select the **Sign-in method** tab.
+3. Under **Additional providers**, click **Google**.
+4. Toggle **Enable**.
+5. Set the **Support email for project** (select your Google email from the dropdown).
+6. Under **Authorized domains**, make sure `localhost` and your production deployment domain (e.g., `github.io` or `vercel.app`) are listed.
+7. Click **Save**.
+
+#### Step 4: Create Cloud Firestore Database
+1. In the left navigation menu, click **Build** ➔ **Firestore Database**.
+2. Click **Create database**.
+3. Choose your database location (e.g., `asia-south1` or `us-central1`).
+4. Select **Start in production mode** (or test mode) and click **Create**.
+5. Go to the **Rules** tab in Firestore and paste the contents of [`firestore.rules`](firestore.rules), then click **Publish**.
+
+#### Step 5: Configure Local Environment Variables
+Create a `.env` file in the project root (or copy from `.env.example`):
+```env
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=AIzaSyA...
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
+VITE_FIREBASE_APP_ID=1:123456789012:web:abcdef...
+
+# Supabase Configuration (Optional - for dual PostgreSQL backend)
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+#### Step 6: Test the Complete Flow
+1. Run `npm run dev` and navigate to `http://localhost:5173`.
+2. Click **Sign In** in the top navigation bar.
+3. Click the prominent **Continue with Google** button.
+4. Select your Google account in the popup.
+5. On first login, complete the Onboarding Modal with your Roll Number, Department, Course, and Semester.
+6. Notice your real Google profile picture and name in the Navbar and Student Dashboard banner.
+7. Submit a new query; it is permanently saved in Firestore under your Google UID!
+8. Refresh the browser; your session persists seamlessly without re-logging in.
+9. Click **Logout**; you are securely logged out and your session is cleared.
+
+---
 1. Push your repository to GitHub.
 2. Go to [vercel.com](https://vercel.com/) and click **Add New** ➔ **Project**.
 3. Import your `student-query-resolution-system` repository.

@@ -35,14 +35,19 @@ export function StudentDashboard() {
   // Enforce Student Privacy: Student sees only their own queries
   const studentSpecificQueries = useMemo(() => {
     if (role === 'student') {
+      const activeId = currentUser?.uid || currentUser?.id;
+      const activeEmail = currentUser?.email?.toLowerCase();
       const activeName = studentUser?.name?.toLowerCase();
       const activeRoll = studentUser?.roll?.toLowerCase();
-      const activeId = currentUser?.id;
 
       return queries.filter(q => {
+        // Match user's Google UID or ID
         if (activeId && q.studentId === activeId) return true;
-        if (activeName && q.studentName?.toLowerCase() === activeName) return true;
-        if (activeRoll && q.studentRoll?.toLowerCase() === activeRoll) return true;
+        // Match user's email
+        if (activeEmail && q.email?.toLowerCase() === activeEmail) return true;
+        // In demo fallback mode without an active login
+        if (!currentUser && activeName && q.studentName?.toLowerCase() === activeName) return true;
+        if (!currentUser && activeRoll && q.studentRoll?.toLowerCase() === activeRoll) return true;
         return false;
       });
     }
@@ -106,10 +111,20 @@ export function StudentDashboard() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+              overflow: 'hidden'
             }}
           >
-            <GraduationCap size={30} />
+            {studentUser?.photoURL ? (
+              <img
+                src={studentUser.photoURL}
+                alt={studentUser.name}
+                referrerPolicy="no-referrer"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <GraduationCap size={30} />
+            )}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>

@@ -5,6 +5,7 @@ import { Navbar } from './components/common/Navbar';
 import { Sidebar } from './components/common/Sidebar';
 import { ToastContainer } from './components/common/Toast';
 import { AuthModal } from './components/auth/AuthModal';
+import { OnboardingModal } from './components/auth/OnboardingModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 import { LandingPage } from './pages/LandingPage';
@@ -16,7 +17,13 @@ import { ArchitectureVivaPage } from './pages/ArchitectureVivaPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 function AppLayout() {
-  const { isAuthModalOpen, closeAuthModal, authModalView } = useApp();
+  const { 
+    isAuthModalOpen, 
+    closeAuthModal, 
+    authModalView,
+    isOnboardingModalOpen,
+    closeOnboardingModal
+  } = useApp();
 
   return (
     <div className="app-container">
@@ -70,6 +77,12 @@ function AppLayout() {
         isOpen={isAuthModalOpen}
         onClose={closeAuthModal}
         initialView={authModalView}
+      />
+
+      {/* Google User Profile Completion & Onboarding Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingModalOpen}
+        onClose={closeOnboardingModal}
       />
     </div>
   );

@@ -29,6 +29,18 @@ import {
   createNotificationInDB,
   uploadQueryAttachment,
 } from '../utils/supabaseClient';
+import {
+  isFirebaseConfigured,
+  signInWithGoogle,
+  signOutFirebase,
+  getUserProfileFromFirestore,
+  saveUserProfileToFirestore,
+  fetchQueriesFromFirestore,
+  saveQueryToFirestore,
+  updateQueryInFirestore,
+  auth,
+} from '../utils/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const AppContext = createContext();
 
@@ -69,6 +81,7 @@ export function AppProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState('login');
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
 
   // Fallback demo personas when Supabase is not configured or in demo mode
   const defaultStudent = {
@@ -130,16 +143,99 @@ export function AppProvider({ children }) {
     setIsAuthModalOpen(false);
   };
 
-  // 1. Initial Auth Check and Listener
+  // 1. Initial Auth Check and Persistent Listener (Firebase Auth + Supabase + Fallback)
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
-      setAuthLoading(false);
-      return;
+    let isMounted = true;
+
+    // A. Real Firebase Authentication with Google Sign-In
+    if (isFirebaseConfigured && auth) {
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (!isMounted) return;
+
+        if (firebaseUser) {
+          const userObj = {
+            id: firebaseUser.uid,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          };
+          setCurrentUser(userObj);
+
+          try {
+            // Retrieve user profile from Firestore
+            let profile = await getUserProfileFromFirestore(firebaseUser.uid);
+            if (profile) {
+              setUserProfile(profile);
+              setRole(profile.role || 'student');
+              if (!profile.is_profile_complete) {
+                setIsOnboardingModalOpen(true);
+              }
+            } else {
+              // Create initial profile upon first Google login
+              const initialProf = {
+                uid: firebaseUser.uid,
+                full_name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                email: firebaseUser.email,
+                photo_url: firebaseUser.photoURL || '',
+                role: 'student',
+                is_profile_complete: false,
+                created_at: new Date().toISOString(),
+              };
+              await saveUserProfileToFirestore(firebaseUser.uid, initialProf);
+              setUserProfile(initialProf);
+              setRole('student');
+              setIsOnboardingModalOpen(true);
+            }
+          } catch (e) {
+            console.error('Error fetching Firestore profile:', e);
+          }
+        } else {
+          // If not logged in via Firebase, check if Supabase session exists
+          if (isSupabaseConfigured && supabase) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              setCurrentUser(session.user);
+              const profile = await fetchUserProfile(session.user.id);
+              if (profile) {
+                setUserProfile(profile);
+                setRole(profile.role || 'student');
+              }
+            }
+          }
+        }
+        setAuthLoading(false);
+      });
+
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
     }
 
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
+    // B. Supabase Auth if Firebase not configured
+    if (isSupabaseConfigured && supabase) {
+      const checkSession = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            setCurrentUser(session.user);
+            const profile = await fetchUserProfile(session.user.id);
+            if (profile) {
+              setUserProfile(profile);
+              setRole(profile.role || 'student');
+            }
+          }
+        } catch (err) {
+          console.error('Session check error:', err);
+        } finally {
+          setAuthLoading(false);
+        }
+      };
+
+      checkSession();
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
           setCurrentUser(session.user);
           const profile = await fetchUserProfile(session.user.id);
@@ -147,43 +243,68 @@ export function AppProvider({ children }) {
             setUserProfile(profile);
             setRole(profile.role || 'student');
           }
+        } else {
+          setCurrentUser(null);
+          setUserProfile(null);
         }
-      } catch (err) {
-        console.error('Session check error:', err);
-      } finally {
-        setAuthLoading(false);
-      }
-    };
+      });
 
-    checkSession();
+      return () => {
+        isMounted = false;
+        subscription?.unsubscribe();
+      };
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setCurrentUser(session.user);
-        const profile = await fetchUserProfile(session.user.id);
-        if (profile) {
-          setUserProfile(profile);
-          setRole(profile.role || 'student');
+    // C. Demo Mode Persistent Session Restoration (when .env is unconfigured)
+    try {
+      const savedSession = localStorage.getItem('ai_pbl_demo_google_session');
+      if (savedSession) {
+        const parsed = JSON.parse(savedSession);
+        if (parsed?.user) {
+          setCurrentUser(parsed.user);
+          setUserProfile(parsed.profile);
+          setRole(parsed.profile?.role || 'student');
+          if (!parsed.profile?.is_profile_complete) {
+            setIsOnboardingModalOpen(true);
+          }
         }
-      } else {
-        setCurrentUser(null);
-        setUserProfile(null);
       }
-    });
-
-    return () => {
-      subscription?.unsubscribe();
-    };
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      setAuthLoading(false);
+    }
   }, []);
 
-  // 2. Fetch Live Database Records
+  // 2. Fetch Live Database Records (PostgreSQL + Firestore)
   const loadDatabaseData = useCallback(async () => {
-    if (!isSupabaseConfigured) return;
-
     try {
       setDataLoading(true);
 
-      // A. Fetch Queries
+      // A. Fetch from Firestore if Firebase is configured
+      if (isFirebaseConfigured) {
+        const fsQueries = await fetchQueriesFromFirestore({
+          role,
+          userId: currentUser?.uid || currentUser?.id,
+          userEmail: currentUser?.email,
+        });
+        if (fsQueries && fsQueries.length > 0) {
+          setQueries(prev => {
+            const fsMap = new Map(fsQueries.map(q => [q.id, q]));
+            const merged = [...fsQueries];
+            prev.forEach(p => {
+              if (!fsMap.has(p.id)) {
+                merged.push(p);
+              }
+            });
+            return merged;
+          });
+        }
+      }
+
+      if (!isSupabaseConfigured) return;
+
+      // B. Fetch Queries from Supabase PostgreSQL
       const dbQueries = await fetchQueriesFromDB({
         role,
         userId: currentUser?.id,
@@ -192,25 +313,25 @@ export function AppProvider({ children }) {
         setQueries(dbQueries);
       }
 
-      // B. Fetch Faculty Directory
+      // C. Fetch Faculty Directory
       const dbFaculty = await fetchFacultyFromDB();
       if (dbFaculty && dbFaculty.length > 0) {
         setFaculty(dbFaculty);
       }
 
-      // C. Fetch Knowledge Rules
+      // D. Fetch Knowledge Rules
       const dbRules = await fetchKnowledgeRulesFromDB();
       if (dbRules && dbRules.length > 0) {
         setKnowledgeRules(dbRules);
       }
 
-      // D. Fetch Notifications
+      // E. Fetch Notifications
       if (currentUser?.id) {
         const dbNotifs = await fetchNotificationsFromDB(currentUser.id);
         setNotifications(dbNotifs);
       }
 
-      // E. Fetch Registered Students (if admin/faculty)
+      // F. Fetch Registered Students (if admin/faculty)
       if (role === 'admin' || role === 'faculty') {
         const { data: studentsData } = await supabase
           .from('profiles')
@@ -297,10 +418,107 @@ export function AppProvider({ children }) {
     showToast('Student account created! You can now log in.', 'success');
   };
 
+  // Google Authentication via Firebase
+  const loginWithGoogle = async () => {
+    try {
+      setAuthLoading(true);
+      const result = await signInWithGoogle();
+      const user = result.user;
+      const userObj = {
+        id: user.uid,
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+      };
+      setCurrentUser(userObj);
+
+      // Check Firestore profile
+      let profile = await getUserProfileFromFirestore(user.uid);
+      if (!profile) {
+        profile = {
+          uid: user.uid,
+          full_name: user.displayName || user.email.split('@')[0],
+          email: user.email,
+          photo_url: user.photoURL || '',
+          role: 'student',
+          is_profile_complete: false,
+          created_at: new Date().toISOString(),
+        };
+        await saveUserProfileToFirestore(user.uid, profile);
+        setUserProfile(profile);
+        setRole('student');
+        setIsOnboardingModalOpen(true);
+      } else {
+        setUserProfile(profile);
+        setRole(profile.role || 'student');
+        if (!profile.is_profile_complete) {
+          setIsOnboardingModalOpen(true);
+        }
+      }
+
+      // Persist in localStorage for demo mode reloads if Firebase .env isn't configured
+      if (!isFirebaseConfigured) {
+        try {
+          localStorage.setItem('ai_pbl_demo_google_session', JSON.stringify({ user: userObj, profile }));
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      showToast(`Welcome, ${user.displayName || user.email}!`, 'success');
+      return user;
+    } catch (err) {
+      console.error('Google Sign-In failed:', err);
+      showToast(err.message || 'Google Sign-In failed.', 'error');
+      throw err;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Update profile details (called after OnboardingModal or profile edit)
+  const updateProfileDetails = async (details) => {
+    if (!currentUser) return;
+    const uid = currentUser.uid || currentUser.id;
+    const merged = {
+      ...userProfile,
+      ...details,
+      uid,
+      full_name: details.full_name || userProfile?.full_name || currentUser.displayName || currentUser.email.split('@')[0],
+      email: currentUser.email,
+      photo_url: currentUser.photoURL || userProfile?.photo_url || '',
+      is_profile_complete: true,
+      updated_at: new Date().toISOString(),
+    };
+    const saved = await saveUserProfileToFirestore(uid, merged);
+    setUserProfile(saved);
+    if (saved.role) {
+      setRole(saved.role);
+    }
+
+    if (!isFirebaseConfigured) {
+      try {
+        localStorage.setItem('ai_pbl_demo_google_session', JSON.stringify({ user: currentUser, profile: saved }));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    setIsOnboardingModalOpen(false);
+    return saved;
+  };
+
   const logout = async () => {
     try {
+      await signOutFirebase();
       if (isSupabaseConfigured) {
         await signOutUser();
+      }
+      try {
+        localStorage.removeItem('ai_pbl_demo_google_session');
+      } catch (e) {
+        console.warn(e);
       }
       setCurrentUser(null);
       setUserProfile(null);
@@ -750,24 +968,36 @@ export function AppProvider({ children }) {
         role,
         setRole,
         studentUser: userProfile ? {
-          name: userProfile.full_name,
-          roll: userProfile.enrollment_number || '23AI-104',
-          email: userProfile.email,
-          branch: userProfile.department || defaultStudent.branch,
+          name: userProfile.full_name || currentUser?.displayName || defaultStudent.name,
+          roll: userProfile.enrollment_number || defaultStudent.roll,
+          email: userProfile.email || currentUser?.email || defaultStudent.email,
+          branch: userProfile.department || userProfile.course || defaultStudent.branch,
           year: userProfile.semester || defaultStudent.year,
-        } : defaultStudent,
+          photoURL: userProfile.photo_url || currentUser?.photoURL || null,
+        } : (currentUser ? {
+          name: currentUser.displayName || currentUser.email.split('@')[0],
+          roll: 'Pending Enrollment',
+          email: currentUser.email,
+          branch: 'Engineering & Technology',
+          year: 'Current Academic Year',
+          photoURL: currentUser.photoURL || null,
+        } : defaultStudent),
         facultyUser: userProfile && role === 'faculty' ? {
-          name: userProfile.full_name,
-          role: 'Faculty Advisor',
+          name: userProfile.full_name || currentUser?.displayName || defaultFaculty.name,
+          role: userProfile.specialization || 'Faculty Advisor',
           department: userProfile.department || defaultFaculty.department,
-          email: userProfile.email,
+          email: userProfile.email || currentUser?.email || defaultFaculty.email,
+          photoURL: userProfile.photo_url || currentUser?.photoURL || null,
         } : defaultFaculty,
         currentUser,
         userProfile,
         authLoading,
-        isConfigured: isSupabaseConfigured,
+        isConfigured: isSupabaseConfigured || isFirebaseConfigured,
+        isFirebaseConfigured,
         dataLoading,
         login,
+        loginWithGoogle,
+        updateProfileDetails,
         registerStudent,
         logout,
         resetUserPassword,
@@ -775,6 +1005,9 @@ export function AppProvider({ children }) {
         authModalView,
         openAuthModal,
         closeAuthModal,
+        isOnboardingModalOpen,
+        openOnboardingModal: () => setIsOnboardingModalOpen(true),
+        closeOnboardingModal: () => setIsOnboardingModalOpen(false),
         toasts,
         showToast,
         removeToast,

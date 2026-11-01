@@ -93,10 +93,20 @@ export function FacultyDashboard() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)'
+              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+              overflow: 'hidden'
             }}
           >
-            <Users size={30} />
+            {facultyUser?.photoURL ? (
+              <img
+                src={facultyUser.photoURL}
+                alt={facultyUser.name}
+                referrerPolicy="no-referrer"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <Users size={30} />
+            )}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>

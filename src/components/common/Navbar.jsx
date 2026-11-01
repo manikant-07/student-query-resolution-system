@@ -27,6 +27,7 @@ export function Navbar() {
     userProfile,
     logout,
     openAuthModal,
+    openOnboardingModal,
     queries, 
     mobileMenuOpen, 
     setMobileMenuOpen,
@@ -245,39 +246,67 @@ export function Navbar() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.35rem 0.75rem',
+                  gap: '0.6rem',
+                  padding: '0.3rem 0.75rem',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border)',
                   borderRadius: '10px'
                 }}
                 className="persona-chip"
               >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    background: role === 'student' ? 'var(--primary-light)' : role === 'admin' ? '#e0e7ff' : 'var(--accent-purple-light)',
-                    color: role === 'student' ? 'var(--primary)' : role === 'admin' ? '#4338ca' : 'var(--accent-purple)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  {userProfile?.full_name ? userProfile.full_name.charAt(0) : 'U'}
-                </div>
-                <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {userProfile?.full_name || currentUser.email}
+                {currentUser?.photoURL || userProfile?.photo_url ? (
+                  <img
+                    src={currentUser?.photoURL || userProfile?.photo_url}
+                    alt={userProfile?.full_name || currentUser.displayName || 'Google Profile'}
+                    referrerPolicy="no-referrer"
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1.5px solid var(--primary)',
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      background: role === 'student' ? 'var(--primary-light)' : role === 'admin' ? '#e0e7ff' : 'var(--accent-purple-light)',
+                      color: role === 'student' ? 'var(--primary)' : role === 'admin' ? '#4338ca' : 'var(--accent-purple)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {(userProfile?.full_name || currentUser.displayName || currentUser.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                    {userProfile?.full_name || currentUser.displayName || currentUser.email}
                   </div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                    {role.toUpperCase()} • {userProfile?.enrollment_number || 'Verified'}
+                    {role.toUpperCase()} • {userProfile?.enrollment_number || 'Google Verified'}
                   </div>
                 </div>
               </div>
+
+              {userProfile && !userProfile.is_profile_complete && (
+                <button
+                  onClick={openOnboardingModal}
+                  className="btn btn-warning btn-sm"
+                  style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}
+                  title="Complete required college profile details"
+                >
+                  Complete Profile
+                </button>
+              )}
 
               <button
                 onClick={logout}

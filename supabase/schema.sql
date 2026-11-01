@@ -529,3 +529,4 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Schema setup complete
+
