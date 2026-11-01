@@ -155,12 +155,12 @@ export function AdminDashboard() {
       {/* Admin Header Banner */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)',
+          background: 'linear-gradient(135deg, #DCEEFF 0%, #F1F7FD 100%)',
           borderRadius: '20px',
           padding: '2rem',
-          color: '#ffffff',
+          border: '1px solid #DFE8F2',
           marginBottom: '2rem',
-          boxShadow: 'var(--shadow-md)',
+          boxShadow: 'var(--shadow-sm)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -171,30 +171,29 @@ export function AdminDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: '16px',
-              background: 'rgba(255, 255, 255, 0.15)',
-              backdropFilter: 'blur(8px)',
+              width: 54,
+              height: 54,
+              borderRadius: '14px',
+              background: '#2878E5',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
+              boxShadow: '0 4px 12px rgba(40, 120, 229, 0.3)',
             }}
           >
-            <ShieldCheck size={32} color="#ffffff" />
+            <ShieldCheck size={28} color="#ffffff" />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <h2 style={{ fontSize: '1.6rem', color: '#ffffff', margin: 0 }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#142B4D', margin: 0, fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
                 Administration & Governance Portal
               </h2>
-              <span style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.2)', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.72rem', background: '#EBF3FD', color: '#2878E5', border: '1px solid #DFE8F2', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>
                 Super Admin Access
               </span>
             </div>
-            <p style={{ fontSize: '0.875rem', color: '#cbd5e1', marginTop: '4px' }}>
-              Institutional control desk: Manage all queries, faculty dispatch, academic expert rules, and system analytics.
+            <p style={{ fontSize: '0.875rem', color: '#52677F', marginTop: '4px' }}>
+              Institutional control desk: Manage queries, faculty dispatch, academic rules, and system analytics.
             </p>
           </div>
         </div>
@@ -202,17 +201,17 @@ export function AdminDashboard() {
         <div style={{ display: 'flex', gap: '0.65rem' }}>
           <button
             onClick={() => setIsCSPOpen(true)}
-            className="btn btn-secondary"
-            style={{ background: 'rgba(255, 255, 255, 0.9)', color: '#1e1b4b', fontWeight: 700 }}
+            className="btn btn-primary"
+            style={{ fontWeight: 700 }}
           >
-            <Sparkles size={16} color="#4338ca" />
+            <Sparkles size={16} />
             <span>Batch CSP Optimizer</span>
           </button>
           <button
             onClick={refreshAllData}
             title="Refresh database records"
             className="btn btn-secondary"
-            style={{ background: 'rgba(255, 255, 255, 0.15)', border: '1px solid rgba(255, 255, 255, 0.3)', color: '#ffffff' }}
+            style={{ background: '#FFFFFF', borderColor: '#DFE8F2', color: '#142B4D' }}
           >
             <RefreshCw size={15} />
             <span>Sync DB</span>
@@ -234,27 +233,27 @@ export function AdminDashboard() {
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Pending Review</span>
-            <Clock size={18} color="#f59e0b" />
+            <Clock size={18} color="var(--warning)" />
           </div>
-          <h3 style={{ fontSize: '1.85rem', color: '#f59e0b', marginTop: '0.35rem' }}>{pendingQueries}</h3>
+          <h3 style={{ fontSize: '1.85rem', color: 'var(--warning)', marginTop: '0.35rem' }}>{pendingQueries}</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Awaiting faculty response</p>
         </div>
 
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Urgent Priority</span>
-            <AlertTriangle size={18} color="#ef4444" />
+            <AlertTriangle size={18} color="var(--danger)" />
           </div>
-          <h3 style={{ fontSize: '1.85rem', color: '#ef4444', marginTop: '0.35rem' }}>{urgentQueries}</h3>
+          <h3 style={{ fontSize: '1.85rem', color: 'var(--danger)', marginTop: '0.35rem' }}>{urgentQueries}</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Critical time-bound tickets</p>
         </div>
 
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Faculty</span>
-            <Users size={18} color="#10b981" />
+            <Users size={18} color="var(--success)" />
           </div>
-          <h3 style={{ fontSize: '1.85rem', color: '#10b981', marginTop: '0.35rem' }}>
+          <h3 style={{ fontSize: '1.85rem', color: 'var(--success)', marginTop: '0.35rem' }}>
             {activeFacultyCount} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ {faculty.length}</span>
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Available for CSP auto-dispatch</p>

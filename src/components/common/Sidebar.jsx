@@ -47,14 +47,14 @@ export function Sidebar() {
       label: "Admin Governance",
       icon: <ShieldCheck size={19} />,
       badge: "Full Control",
-      badgeColor: '#4338ca'
+      badgeColor: '#2878E5'
     },
     {
       to: "/ai-lab",
       label: "AI Algorithm Lab",
       icon: <Cpu size={19} />,
       badge: "Modules 1-4",
-      badgeColor: 'var(--accent-copper)'
+      badgeColor: '#2878E5'
     },
     {
       to: "/viva",

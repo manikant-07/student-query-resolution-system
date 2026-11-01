@@ -118,7 +118,7 @@ export function FacultyDashboard() {
 
         <button
           onClick={() => setIsCSPOpen(true)}
-          className="btn btn-purple btn-lg"
+          className="btn btn-primary btn-lg"
           style={{ gap: '0.5rem' }}
         >
           <Cpu size={18} />
@@ -131,18 +131,18 @@ export function FacultyDashboard() {
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Awaiting Reply</span>
-            <Clock size={18} color="#f59e0b" />
+            <Clock size={18} color="var(--warning)" />
           </div>
-          <h3 style={{ fontSize: '1.85rem', color: '#f59e0b', marginTop: '0.35rem' }}>{pendingQueries.length}</h3>
+          <h3 style={{ fontSize: '1.85rem', color: 'var(--warning)', marginTop: '0.35rem' }}>{pendingQueries.length}</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Requires investigation</p>
         </div>
 
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Assigned to Me</span>
-            <Briefcase size={18} color="var(--accent-purple)" />
+            <Briefcase size={18} color="var(--primary)" />
           </div>
-          <h3 style={{ fontSize: '1.85rem', color: 'var(--accent-purple)', marginTop: '0.35rem' }}>{myAssignedQueries.length}</h3>
+          <h3 style={{ fontSize: '1.85rem', color: 'var(--primary)', marginTop: '0.35rem' }}>{myAssignedQueries.length}</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Active faculty caseload</p>
         </div>
 
@@ -158,9 +158,9 @@ export function FacultyDashboard() {
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Fully Resolved</span>
-            <CheckCircle size={18} color="#10b981" />
+            <CheckCircle size={18} color="var(--success)" />
           </div>
-          <h3 style={{ fontSize: '1.85rem', color: '#10b981', marginTop: '0.35rem' }}>{resolvedQueries.length}</h3>
+          <h3 style={{ fontSize: '1.85rem', color: 'var(--success)', marginTop: '0.35rem' }}>{resolvedQueries.length}</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Successfully closed</p>
         </div>
       </div>

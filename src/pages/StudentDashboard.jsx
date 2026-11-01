@@ -153,9 +153,9 @@ export function StudentDashboard() {
     <div className="glass-card" style={{ padding: '1.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Pending Review</span>
-        <Clock size={18} color="#f59e0b" />
+        <Clock size={18} color="var(--warning)" />
       </div>
-      <h3 style={{ fontSize: '1.85rem', color: '#f59e0b', marginTop: '0.35rem' }}>{pendingCount}</h3>
+      <h3 style={{ fontSize: '1.85rem', color: 'var(--warning)', marginTop: '0.35rem' }}>{pendingCount}</h3>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Awaiting faculty response</p>
     </div>
 
@@ -171,9 +171,9 @@ export function StudentDashboard() {
     <div className="glass-card" style={{ padding: '1.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Fully Resolved</span>
-        <CheckCircle2 size={18} color="#10b981" />
+        <CheckCircle2 size={18} color="var(--success)" />
       </div>
-      <h3 style={{ fontSize: '1.85rem', color: '#10b981', marginTop: '0.35rem' }}>{resolvedCount}</h3>
+      <h3 style={{ fontSize: '1.85rem', color: 'var(--success)', marginTop: '0.35rem' }}>{resolvedCount}</h3>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Successfully closed</p>
     </div>
   </div>

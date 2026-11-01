@@ -22,8 +22,8 @@ export function AILabPage() {
       {/* Header Banner */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #f5f3ff 100%)',
-          border: '1px solid #bfdbfe',
+          background: 'linear-gradient(135deg, #DCEEFF 0%, #F1F7FD 100%)',
+          border: '1px solid #DFE8F2',
           borderRadius: '20px',
           padding: '2rem',
           marginBottom: '2rem',
@@ -38,29 +38,29 @@ export function AILabPage() {
                   width: 40,
                   height: 40,
                   borderRadius: '12px',
-                  background: 'var(--primary)',
+                  background: '#2878E5',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 6px rgba(23, 63, 53, 0.2)'
+                  boxShadow: '0 2px 8px rgba(40, 120, 229, 0.25)'
                 }}
               >
                 <Cpu size={22} />
               </div>
-              <h2 style={{ fontSize: '1.65rem', color: '#0f172a' }}>
+              <h2 style={{ fontSize: '1.65rem', color: '#142B4D', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
                 AI Algorithm Lab (Modules 1–4)
               </h2>
             </div>
-            <p style={{ fontSize: '0.9rem', color: '#64748b', maxWidth: '720px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.9rem', color: '#52677F', maxWidth: '720px', lineHeight: 1.5 }}>
               Executable algorithmic demonstrations for the full Artificial Intelligence syllabus. Test inputs, inspect step-by-step traces, and understand real-world application to the Student Query Portal.
             </p>
           </div>
 
           <div
             style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
+              background: '#FFFFFF',
+              border: '1px solid #DFE8F2',
               borderRadius: '12px',
               padding: '0.75rem 1rem',
               display: 'flex',
@@ -68,10 +68,10 @@ export function AILabPage() {
               gap: '0.65rem'
             }}
           >
-            <CheckCircle2 size={18} color="#16a34a" />
-            <div style={{ fontSize: '0.8rem', color: '#1e293b' }}>
+            <CheckCircle2 size={18} color="#16865B" />
+            <div style={{ fontSize: '0.8rem', color: '#142B4D' }}>
               <strong>Pure Client-Side Math</strong>
-              <div style={{ color: '#64748b', fontSize: '0.72rem' }}>No mocked API calls</div>
+              <div style={{ color: '#52677F', fontSize: '0.72rem' }}>No mocked API calls</div>
             </div>
           </div>
         </div>
@@ -92,8 +92,8 @@ export function AILabPage() {
           style={{
             padding: '1.25rem',
             borderRadius: '14px',
-            border: activeModule === 1 ? '2px solid #2563eb' : '1px solid #e2e8f0',
-            background: activeModule === 1 ? 'linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)' : '#ffffff',
+            border: activeModule === 1 ? '2px solid #2878E5' : '1px solid #DFE8F2',
+            background: activeModule === 1 ? '#EBF3FD' : '#FFFFFF',
             boxShadow: activeModule === 1 ? 'var(--shadow-md)' : 'var(--shadow-xs)',
             cursor: 'pointer',
             textAlign: 'left',
@@ -101,13 +101,13 @@ export function AILabPage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <Search size={18} color="#2563eb" />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase' }}>
+            <Search size={18} color="#2878E5" />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2878E5', textTransform: 'uppercase' }}>
               Module 1
             </span>
           </div>
-          <h4 style={{ fontSize: '1rem', color: '#0f172a', marginBottom: '0.25rem' }}>Problem Solving Search</h4>
-          <p style={{ fontSize: '0.775rem', color: '#64748b' }}>BFS, DFS, IDS, Bidirectional, A*, AO*, and CSP</p>
+          <h4 style={{ fontSize: '1rem', color: '#142B4D', marginBottom: '0.25rem' }}>Problem Solving Search</h4>
+          <p style={{ fontSize: '0.775rem', color: '#52677F' }}>BFS, DFS, IDS, Bidirectional, A*, AO*, and CSP</p>
         </button>
 
         {/* Module 2 Tab */}
@@ -116,8 +116,8 @@ export function AILabPage() {
           style={{
             padding: '1.25rem',
             borderRadius: '14px',
-            border: activeModule === 2 ? '2px solid #7c3aed' : '1px solid #e2e8f0',
-            background: activeModule === 2 ? 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' : '#ffffff',
+            border: activeModule === 2 ? '2px solid #2878E5' : '1px solid #DFE8F2',
+            background: activeModule === 2 ? '#EBF3FD' : '#FFFFFF',
             boxShadow: activeModule === 2 ? 'var(--shadow-md)' : 'var(--shadow-xs)',
             cursor: 'pointer',
             textAlign: 'left',
@@ -125,13 +125,13 @@ export function AILabPage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <Gamepad2 size={18} color="#7c3aed" />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase' }}>
+            <Gamepad2 size={18} color="#2878E5" />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2878E5', textTransform: 'uppercase' }}>
               Module 2
             </span>
           </div>
-          <h4 style={{ fontSize: '1rem', color: '#0f172a', marginBottom: '0.25rem' }}>Adversarial & Classic AI</h4>
-          <p style={{ fontSize: '0.775rem', color: '#64748b' }}>Minimax, Alpha-Beta, Water Jug, N-Queens, TSP, 8-Puzzle</p>
+          <h4 style={{ fontSize: '1rem', color: '#142B4D', marginBottom: '0.25rem' }}>Adversarial & Classic AI</h4>
+          <p style={{ fontSize: '0.775rem', color: '#52677F' }}>Minimax, Alpha-Beta, Water Jug, N-Queens, TSP, 8-Puzzle</p>
         </button>
 
         {/* Module 3 Tab */}
@@ -140,8 +140,8 @@ export function AILabPage() {
           style={{
             padding: '1.25rem',
             borderRadius: '14px',
-            border: activeModule === 3 ? '2px solid #059669' : '1px solid #e2e8f0',
-            background: activeModule === 3 ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : '#ffffff',
+            border: activeModule === 3 ? '2px solid #2878E5' : '1px solid #DFE8F2',
+            background: activeModule === 3 ? '#EBF3FD' : '#FFFFFF',
             boxShadow: activeModule === 3 ? 'var(--shadow-md)' : 'var(--shadow-xs)',
             cursor: 'pointer',
             textAlign: 'left',
@@ -149,13 +149,13 @@ export function AILabPage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <Brain size={18} color="#059669" />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>
+            <Brain size={18} color="#2878E5" />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2878E5', textTransform: 'uppercase' }}>
               Module 3
             </span>
           </div>
-          <h4 style={{ fontSize: '1rem', color: '#0f172a', marginBottom: '0.25rem' }}>Knowledge & Reasoning</h4>
-          <p style={{ fontSize: '0.775rem', color: '#64748b' }}>Logic, FOL, Semantic Networks, Frames, Expert Systems</p>
+          <h4 style={{ fontSize: '1rem', color: '#142B4D', marginBottom: '0.25rem' }}>Knowledge & Reasoning</h4>
+          <p style={{ fontSize: '0.775rem', color: '#52677F' }}>Logic, FOL, Semantic Networks, Frames, Expert Systems</p>
         </button>
 
         {/* Module 4 Tab */}
@@ -164,8 +164,8 @@ export function AILabPage() {
           style={{
             padding: '1.25rem',
             borderRadius: '14px',
-            border: activeModule === 4 ? '2px solid #d97706' : '1px solid #e2e8f0',
-            background: activeModule === 4 ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' : '#ffffff',
+            border: activeModule === 4 ? '2px solid #2878E5' : '1px solid #DFE8F2',
+            background: activeModule === 4 ? '#EBF3FD' : '#FFFFFF',
             boxShadow: activeModule === 4 ? 'var(--shadow-md)' : 'var(--shadow-xs)',
             cursor: 'pointer',
             textAlign: 'left',
@@ -173,18 +173,18 @@ export function AILabPage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <BarChart3 size={18} color="#d97706" />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>
+            <BarChart3 size={18} color="#2878E5" />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2878E5', textTransform: 'uppercase' }}>
               Module 4
             </span>
           </div>
-          <h4 style={{ fontSize: '1rem', color: '#0f172a', marginBottom: '0.25rem' }}>Statistical Reasoning</h4>
-          <p style={{ fontSize: '0.775rem', color: '#64748b' }}>Probability, Bayes, Certainty Factors, Dempster-Shafer, Fuzzy</p>
+          <h4 style={{ fontSize: '1rem', color: '#142B4D', marginBottom: '0.25rem' }}>Statistical Reasoning</h4>
+          <p style={{ fontSize: '0.775rem', color: '#52677F' }}>Bayes Rule, MYCIN CF, Belief Networks, Dempster-Shafer</p>
         </button>
       </div>
 
-      {/* Render Selected Module Lab */}
-      <div>
+      {/* Active Module Demo Area */}
+      <div style={{ minHeight: '600px' }}>
         {activeModule === 1 && <Module1Search />}
         {activeModule === 2 && <Module2Adversarial />}
         {activeModule === 3 && <Module3Knowledge />}

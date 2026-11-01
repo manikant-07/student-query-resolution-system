@@ -1,12 +1,16 @@
 /* ==========================================================================
-   Design System: University ERP / Academic SaaS Platform
+   Design System: Meritto-Inspired EdTech Platform
    Visual Identity:
-   - Primary: Deep Forest Green (#173F35)
-   - Secondary: Warm Ivory (#F7F6F0)
-   - Accent: Muted Copper (#C58B58)
-   - Text: Charcoal (#252B29)
-   - Cards: Clean White (#FFFFFF) with subtle borders (#E5E3DA)
-   - Background: Soft warm neutral shades (#FAF9F5 / #F2EFE9)
+   - Main background: Soft Sky Blue (#DCEEFF)
+   - Secondary background: Very Light Blue (#F1F7FD)
+   - Navigation background: White (#FFFFFF)
+   - Primary blue: #2878E5
+   - Dark navy text: #142B4D
+   - Secondary text: #52677F
+   - Cards: White (#FFFFFF)
+   - Borders: #DFE8F2
+   - Success: #16865B
+   - Warning: #E5A13B
    ========================================================================== */
 
 :root {
@@ -14,64 +18,66 @@
   --font-heading: 'Outfit', var(--font-sans);
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Color Palette - University Institutional Light Mode */
-  --bg-main: #FAF9F5;
-  --bg-subtle: #F2EFE9;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FDFDFB;
+  /* Color Palette - Meritto EdTech Light Mode */
+  --bg-main: #DCEEFF;         /* Soft Sky Blue main background */
+  --bg-subtle: #F1F7FD;       /* Very Light Blue secondary background */
+  --bg-card: #FFFFFF;         /* Pure White cards */
+  --bg-card-hover: #F8FAFD;
+  --bg-nav: #FFFFFF;          /* Pure White navigation bar */
+  --bg-sidebar: #FFFFFF;      /* Clean White sidebar */
   --bg-glass: #FFFFFF;
-  --border-glass: #E5E3DA;
+  --border-glass: #DFE8F2;
 
-  --text-primary: #252B29;    /* Clean Charcoal */
-  --text-secondary: #4E5754;  /* Medium Charcoal */
-  --text-muted: #75807B;      /* Warm Muted Grey */
-  --text-light: #9DA7A3;
+  --text-primary: #142B4D;    /* Dark navy text */
+  --text-secondary: #52677F;  /* Secondary slate text */
+  --text-muted: #7E92A8;      /* Muted text */
+  --text-light: #9BB0C7;
 
-  --primary: #173F35;         /* Deep Forest Green */
-  --primary-hover: #102C25;
-  --primary-light: #EAF2EF;   /* Soft sage ivory tint */
-  --primary-glow: rgba(23, 63, 53, 0.12);
+  --primary: #2878E5;         /* Meritto Primary Blue */
+  --primary-hover: #1E63C2;
+  --primary-light: #EBF3FD;   /* Soft blue wash */
+  --primary-glow: rgba(40, 120, 229, 0.12);
 
-  --accent-copper: #C58B58;   /* Muted Copper */
-  --accent-copper-hover: #B57B4A;
-  --accent-copper-light: #FDF6ED;
+  --accent-copper: #E5A13B;   /* Warm Amber accent */
+  --accent-copper-hover: #CD8E30;
+  --accent-copper-light: #FEF7EC;
 
-  --accent-purple: #C58B58;   /* Aligned with Muted Copper for consistency */
-  --accent-purple-light: #FDF6ED;
-  --accent-cyan: #2A6A5E;
-  --accent-cyan-light: #EBF4F2;
+  --accent-purple: #2878E5;
+  --accent-purple-light: #EBF3FD;
+  --accent-cyan: #0284C7;
+  --accent-cyan-light: #E0F2FE;
 
-  --success: #1B5E43;         /* University Forest Green */
-  --success-light: #EBF5F0;
-  --warning: #B87333;         /* Copper Amber */
-  --warning-light: #FDF6ED;
-  --danger: #BA3C34;          /* Crimson Brick */
-  --danger-light: #FDF0EE;
-  --info: #2A6A5E;
-  --info-light: #EAF2EF;
+  --success: #16865B;         /* Professional EdTech Green */
+  --success-light: #E8F6F0;
+  --warning: #E5A13B;         /* Professional Warm Amber */
+  --warning-light: #FEF7EC;
+  --danger: #D9383A;          /* Crisp Error Red */
+  --danger-light: #FDF1F1;
+  --info: #2878E5;
+  --info-light: #EBF3FD;
 
-  --border: #E5E3DA;
-  --border-light: #ECEAE2;
+  --border: #DFE8F2;          /* Clean border */
+  --border-light: #EDF3F9;
 
-  /* ERP Gradients & Banners (Subtle institutional tones) */
-  --app-gradient: #FAF9F5;
-  --hero-gradient: linear-gradient(180deg, #FFFFFF 0%, #FAF9F5 100%);
-  --banner-student: linear-gradient(135deg, #FFFFFF 0%, #F7F6F0 100%);
-  --banner-faculty: linear-gradient(135deg, #FFFFFF 0%, #FAF9F5 100%);
+  /* Backgrounds & Banners */
+  --app-gradient: #DCEEFF;
+  --hero-gradient: linear-gradient(180deg, #DCEEFF 0%, #F1F7FD 100%);
+  --banner-student: linear-gradient(135deg, #FFFFFF 0%, #F1F7FD 100%);
+  --banner-faculty: linear-gradient(135deg, #FFFFFF 0%, #F1F7FD 100%);
 
-  /* Institutional Crisp Shadows */
-  --shadow-xs: 0 1px 2px 0 rgba(37, 43, 41, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(37, 43, 41, 0.06), 0 1px 2px -1px rgba(37, 43, 41, 0.04);
-  --shadow-md: 0 4px 8px -1px rgba(37, 43, 41, 0.07), 0 2px 4px -2px rgba(37, 43, 41, 0.04);
-  --shadow-lg: 0 10px 18px -3px rgba(37, 43, 41, 0.08), 0 4px 6px -4px rgba(37, 43, 41, 0.03);
-  --shadow-xl: 0 18px 24px -5px rgba(37, 43, 41, 0.1), 0 8px 10px -6px rgba(37, 43, 41, 0.04);
-  --shadow-glow: 0 0 16px rgba(23, 63, 53, 0.12);
+  /* Clean subtle enterprise shadows (no heavy glowing shadows) */
+  --shadow-xs: 0 1px 2px 0 rgba(20, 43, 77, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(20, 43, 77, 0.06), 0 1px 2px -1px rgba(20, 43, 77, 0.04);
+  --shadow-md: 0 4px 10px -1px rgba(20, 43, 77, 0.06), 0 2px 5px -2px rgba(20, 43, 77, 0.03);
+  --shadow-lg: 0 10px 20px -3px rgba(20, 43, 77, 0.07), 0 4px 8px -4px rgba(20, 43, 77, 0.03);
+  --shadow-xl: 0 16px 28px -5px rgba(20, 43, 77, 0.08), 0 6px 12px -6px rgba(20, 43, 77, 0.03);
+  --shadow-glow: 0 0 16px rgba(40, 120, 229, 0.14);
 
   /* Radii */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
 
   /* Transitions */
@@ -80,61 +86,63 @@
 }
 
 /* ==========================================================================
-   Dark Mode Palette & Theme Variables (Deep Charcoal & Pine Green)
+   Dark Mode Palette & Theme Variables (Deep Navy & Sky Blue)
    ========================================================================== */
 [data-theme="dark"],
 :root.dark {
   color-scheme: dark;
 
-  --bg-main: #101715;
-  --bg-subtle: #16221F;
-  --bg-card: #192623;
-  --bg-card-hover: #1E2D2A;
-  --bg-glass: #192623;
-  --border-glass: #293B36;
+  --bg-main: #0E1A2B;         /* Deep navy night background */
+  --bg-subtle: #142338;       /* Subtle navy card background */
+  --bg-card: #182B44;         /* Navy card */
+  --bg-card-hover: #1F3656;
+  --bg-nav: #142338;
+  --bg-sidebar: #142338;
+  --bg-glass: #182B44;
+  --border-glass: #263E5E;
 
-  --text-primary: #F7F6F0;    /* Warm Ivory */
-  --text-secondary: #CBD5D0;
-  --text-muted: #8E9B95;
-  --text-light: #64736D;
+  --text-primary: #F1F7FD;    /* Light sky text */
+  --text-secondary: #ADC3DB;
+  --text-muted: #7E96B3;
+  --text-light: #5B7594;
 
-  --primary: #2C6E5E;         /* Lighter Forest Green for dark contrast */
-  --primary-hover: #378572;
-  --primary-light: rgba(44, 110, 94, 0.2);
-  --primary-glow: rgba(44, 110, 94, 0.3);
+  --primary: #3B8AF5;         /* Vibrant blue for dark mode */
+  --primary-hover: #509AF8;
+  --primary-light: rgba(59, 138, 245, 0.18);
+  --primary-glow: rgba(59, 138, 245, 0.28);
 
-  --accent-copper: #D49B6A;
-  --accent-copper-hover: #E2AC7E;
-  --accent-copper-light: rgba(212, 155, 106, 0.18);
+  --accent-copper: #F0AE4C;
+  --accent-copper-hover: #F7BF6E;
+  --accent-copper-light: rgba(240, 174, 76, 0.18);
 
-  --accent-purple: #D49B6A;
-  --accent-purple-light: rgba(212, 155, 106, 0.18);
-  --accent-cyan: #3EA694;
-  --accent-cyan-light: rgba(62, 166, 148, 0.18);
+  --accent-purple: #3B8AF5;
+  --accent-purple-light: rgba(59, 138, 245, 0.18);
+  --accent-cyan: #38BDF8;
+  --accent-cyan-light: rgba(56, 189, 248, 0.18);
 
-  --success: #349E73;
-  --success-light: rgba(52, 158, 115, 0.18);
-  --warning: #D49B6A;
-  --warning-light: rgba(212, 155, 106, 0.18);
-  --danger: #D9534F;
-  --danger-light: rgba(217, 83, 79, 0.18);
-  --info: #3EA694;
-  --info-light: rgba(62, 166, 148, 0.18);
+  --success: #22C57E;
+  --success-light: rgba(34, 197, 126, 0.18);
+  --warning: #F0AE4C;
+  --warning-light: rgba(240, 174, 76, 0.18);
+  --danger: #EF5350;
+  --danger-light: rgba(239, 83, 80, 0.18);
+  --info: #3B8AF5;
+  --info-light: rgba(59, 138, 245, 0.18);
 
-  --border: #283934;
-  --border-light: #202E2A;
+  --border: #263E5E;
+  --border-light: #1E334F;
 
-  --app-gradient: #101715;
-  --hero-gradient: linear-gradient(180deg, #192623 0%, #101715 100%);
-  --banner-student: linear-gradient(135deg, #192623 0%, #16221F 100%);
-  --banner-faculty: linear-gradient(135deg, #192623 0%, #16221F 100%);
+  --app-gradient: #0E1A2B;
+  --hero-gradient: linear-gradient(180deg, #182B44 0%, #0E1A2B 100%);
+  --banner-student: linear-gradient(135deg, #182B44 0%, #142338 100%);
+  --banner-faculty: linear-gradient(135deg, #182B44 0%, #142338 100%);
 
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 20px 30px -5px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(44, 110, 94, 0.3);
+  --shadow-glow: 0 0 20px rgba(59, 138, 245, 0.25);
 }
 
 /* Reset & Base */
@@ -216,7 +224,7 @@ button, input, select, textarea {
   padding: 1.5rem 1.75rem;
 }
 
-/* Clean Institutional Card */
+/* Clean Meritto-Style Card */
 .glass-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -227,14 +235,14 @@ button, input, select, textarea {
 
 .glass-card:hover {
   box-shadow: var(--shadow-md);
-  border-color: #D8D5CB;
+  border-color: #CADAEB;
 }
 
 [data-theme="dark"] .glass-card:hover {
-  border-color: #374C46;
+  border-color: #35527A;
 }
 
-/* Subtle Institutional Accent */
+/* EdTech Accent Text */
 .gradient-text {
   color: var(--primary);
   font-weight: 800;
@@ -268,13 +276,13 @@ button, input, select, textarea {
 .btn-primary {
   background: var(--primary);
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(23, 63, 53, 0.2);
+  box-shadow: 0 1px 3px rgba(40, 120, 229, 0.25);
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
   color: #ffffff;
-  box-shadow: 0 3px 8px rgba(23, 63, 53, 0.25);
+  box-shadow: 0 3px 8px rgba(40, 120, 229, 0.35);
 }
 
 .btn-secondary {
@@ -286,20 +294,20 @@ button, input, select, textarea {
 
 .btn-secondary:hover {
   background: var(--bg-subtle);
-  border-color: #D8D5CB;
+  border-color: #CADAEB;
   color: var(--text-primary);
 }
 
 .btn-purple {
-  background: var(--accent-copper);
+  background: var(--primary);
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(197, 139, 88, 0.25);
+  box-shadow: 0 1px 3px rgba(40, 120, 229, 0.25);
 }
 
 .btn-purple:hover {
-  background: var(--accent-copper-hover);
+  background: var(--primary-hover);
   color: #ffffff;
-  box-shadow: 0 3px 8px rgba(197, 139, 88, 0.35);
+  box-shadow: 0 3px 8px rgba(40, 120, 229, 0.35);
 }
 
 .btn-ghost {
@@ -324,7 +332,7 @@ button, input, select, textarea {
   border-radius: var(--radius-md);
 }
 
-/* Institutional Status & Priority Badges */
+/* EdTech Status & Priority Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -338,66 +346,66 @@ button, input, select, textarea {
 }
 
 .badge-pending {
-  background: #FDF6ED;
-  color: #A26829;
-  border: 1px solid #F4DCB9;
+  background: #FEF7EC;
+  color: #C0791B;
+  border: 1px solid #FCE8C8;
 }
 
 .badge-answered {
-  background: #EAF2EF;
-  color: #173F35;
-  border: 1px solid #D1E3DC;
+  background: #EBF3FD;
+  color: #2878E5;
+  border: 1px solid #D0E2FB;
 }
 
 .badge-resolved {
-  background: #EBF5F0;
-  color: #1B5E43;
-  border: 1px solid #C8E6D8;
+  background: #E8F6F0;
+  color: #16865B;
+  border: 1px solid #C5EADB;
 }
 
 .badge-urgent {
-  background: #FDF0EE;
-  color: #BA3C34;
-  border: 1px solid #F8D1CC;
+  background: #FDF1F1;
+  color: #D9383A;
+  border: 1px solid #F9CDCD;
 }
 
 .badge-high {
-  background: #FDF4ED;
-  color: #B87333;
-  border: 1px solid #F9DCC7;
+  background: #FEF7EC;
+  color: #E5A13B;
+  border: 1px solid #FCE8C8;
 }
 
 .badge-medium {
-  background: #FDF8EE;
-  color: #946A1B;
-  border: 1px solid #F7E7C2;
+  background: #EFF5FC;
+  color: #2878E5;
+  border: 1px solid #D5E4F7;
 }
 
 .badge-low {
-  background: #F2EFE9;
-  color: #5E6763;
-  border: 1px solid #E2DED5;
+  background: #F1F7FD;
+  color: #52677F;
+  border: 1px solid #DFE8F2;
 }
 
 .badge-implemented {
-  background: #EBF5F0;
-  color: #1B5E43;
-  border: 1px solid #C8E6D8;
+  background: #E8F6F0;
+  color: #16865B;
+  border: 1px solid #C5EADB;
 }
 
 .badge-simulation {
-  background: #FDF6ED;
-  color: #A26829;
-  border: 1px solid #F4DCB9;
+  background: #FEF7EC;
+  color: #C0791B;
+  border: 1px solid #FCE8C8;
 }
 
 .badge-concept {
-  background: #EAF2EF;
-  color: #173F35;
-  border: 1px solid #D1E3DC;
+  background: #EBF3FD;
+  color: #2878E5;
+  border: 1px solid #D0E2FB;
 }
 
-/* Form Controls - Clean ERP Inputs */
+/* Form Controls - Clean EdTech Inputs */
 .form-group {
   margin-bottom: 1.25rem;
 }
@@ -438,11 +446,11 @@ button, input, select, textarea {
   margin-top: 0.35rem;
 }
 
-/* Institutional Modals */
+/* Modals */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(37, 43, 41, 0.55);
+  background: rgba(20, 43, 77, 0.45);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
@@ -487,7 +495,7 @@ button, input, select, textarea {
   border-bottom-right-radius: var(--radius-lg);
 }
 
-/* Professional Tables */
+/* Tables */
 .table-container {
   overflow-x: auto;
   border-radius: var(--radius-lg);
@@ -530,14 +538,14 @@ button, input, select, textarea {
 
 /* Algorithm Visualizers */
 .visualizer-box {
-  background: #101715;
-  color: #E6E4DC;
+  background: #0E1A2B;
+  color: #EDF3F9;
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   overflow-x: auto;
-  border: 1px solid #23332F;
+  border: 1px solid #263E5E;
 }
 
 .trace-line {
@@ -548,24 +556,24 @@ button, input, select, textarea {
 }
 
 .trace-step {
-  color: #D49B6A;
+  color: #F0AE4C;
   font-weight: 600;
   min-width: 60px;
 }
 
 .trace-action {
-  color: #8FD8BD;
+  color: #38BDF8;
 }
 
 .trace-eval {
-  color: #F7D08A;
+  color: #22C57E;
 }
 
 /* Chessboard for N-Queens */
 .chessboard {
   display: grid;
   width: fit-content;
-  border: 3px solid #173F35;
+  border: 3px solid #2878E5;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
@@ -584,15 +592,15 @@ button, input, select, textarea {
 }
 
 .chess-cell.light {
-  background: #F7F6F0;
+  background: #FFFFFF;
 }
 
 .chess-cell.dark {
-  background: #D1E3DC;
+  background: #DCEEFF;
 }
 
 .chess-cell.queen {
-  background: #C58B58;
+  background: #2878E5;
   color: #FFFFFF;
 }
 
@@ -608,19 +616,19 @@ button, input, select, textarea {
 
 .water-jug {
   width: 90px;
-  border: 3px solid #173F35;
+  border: 3px solid #2878E5;
   border-top: none;
   border-radius: 0 0 16px 16px;
   position: relative;
-  background: rgba(234, 242, 239, 0.5);
+  background: rgba(220, 238, 255, 0.5);
   display: flex;
   flex-direction: column-reverse;
   overflow: hidden;
-  box-shadow: 0 6px 14px rgba(23, 63, 53, 0.12);
+  box-shadow: 0 6px 14px rgba(40, 120, 229, 0.12);
 }
 
 .water-fill {
-  background: linear-gradient(180deg, #3A8E7D 0%, #173F35 100%);
+  background: linear-gradient(180deg, #509AF8 0%, #2878E5 100%);
   width: 100%;
   transition: height 350ms cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -637,7 +645,7 @@ button, input, select, textarea {
   grid-template-columns: repeat(3, 70px);
   grid-template-rows: repeat(3, 70px);
   gap: 6px;
-  background: #173F35;
+  background: #2878E5;
   padding: 8px;
   border-radius: var(--radius-md);
   width: fit-content;
@@ -647,7 +655,7 @@ button, input, select, textarea {
 
 .puzzle-tile {
   background: #FFFFFF;
-  color: #252B29;
+  color: #142B4D;
   font-size: 1.5rem;
   font-weight: 700;
   font-family: var(--font-heading);
@@ -657,18 +665,18 @@ button, input, select, textarea {
   border-radius: var(--radius-sm);
   cursor: pointer;
   user-select: none;
-  border: 1px solid #D8D5CB;
+  border: 1px solid #DFE8F2;
   box-shadow: 0 2px 4px rgba(0,0,0,0.06);
   transition: transform var(--transition-fast), background var(--transition-fast);
 }
 
 .puzzle-tile:hover {
-  background: #EAF2EF;
+  background: #EBF3FD;
   transform: translateY(-2px);
 }
 
 .puzzle-tile.empty {
-  background: #102C25;
+  background: #1E63C2;
   border: 1px dashed rgba(255, 255, 255, 0.2);
   cursor: default;
 }
@@ -707,12 +715,12 @@ button, input, select, textarea {
    ========================================================================== */
 
 [data-theme="dark"] header {
-  background: #16221F !important;
+  background: var(--bg-nav) !important;
   border-bottom-color: var(--border) !important;
 }
 
 [data-theme="dark"] aside.sidebar-nav {
-  background: #16221F !important;
+  background: var(--bg-sidebar) !important;
   border-right-color: var(--border) !important;
 }
 
@@ -753,7 +761,11 @@ button, input, select, textarea {
 [data-theme="dark"] [style*="background: #f1f5f9"],
 [data-theme="dark"] [style*="background:#f1f5f9"],
 [data-theme="dark"] [style*="background: #f0f7ff"],
-[data-theme="dark"] [style*="background:#f0f7ff"] {
+[data-theme="dark"] [style*="background:#f0f7ff"],
+[data-theme="dark"] [style*="background: #F1F7FD"],
+[data-theme="dark"] [style*="background:#F1F7FD"],
+[data-theme="dark"] [style*="background: #DCEEFF"],
+[data-theme="dark"] [style*="background:#DCEEFF"] {
   background: var(--bg-subtle) !important;
 }
 
@@ -766,74 +778,76 @@ button, input, select, textarea {
 
 [data-theme="dark"] [style*="color: #0f172a"],
 [data-theme="dark"] [style*="color:#0f172a"],
-[data-theme="dark"] [style*="color: #252B29"],
-[data-theme="dark"] [style*="color: rgb(15, 23, 42)"] {
+[data-theme="dark"] [style*="color: #142B4D"],
+[data-theme="dark"] [style*="color:#142B4D"],
+[data-theme="dark"] [style*="color: rgb(20, 43, 77)"] {
   color: var(--text-primary) !important;
 }
 
+[data-theme="dark"] [style*="color: #52677F"],
+[data-theme="dark"] [style*="color:#52677F"],
 [data-theme="dark"] [style*="color: #1e293b"],
 [data-theme="dark"] [style*="color:#1e293b"],
 [data-theme="dark"] [style*="color: #334155"],
-[data-theme="dark"] [style*="color:#334155"],
-[data-theme="dark"] [style*="color: #4E5754"] {
+[data-theme="dark"] [style*="color:#334155"] {
   color: var(--text-secondary) !important;
 }
 
 [data-theme="dark"] [style*="color: #64748b"],
 [data-theme="dark"] [style*="color:#64748b"],
-[data-theme="dark"] [style*="color: #75807B"],
+[data-theme="dark"] [style*="color: #7E92A8"],
 [data-theme="dark"] [style*="color: rgb(100, 116, 139)"] {
   color: var(--text-muted) !important;
 }
 
+[data-theme="dark"] [style*="border: 1px solid #DFE8F2"],
 [data-theme="dark"] [style*="border: 1px solid #e2e8f0"],
 [data-theme="dark"] [style*="border: 1px solid #bfdbfe"],
-[data-theme="dark"] [style*="border: 1px solid #dbeafe"],
-[data-theme="dark"] [style*="border: 1px solid #E5E3DA"] {
+[data-theme="dark"] [style*="border: 1px solid #dbeafe"] {
   border-color: var(--border) !important;
 }
 
 /* Dark Mode Badges */
 [data-theme="dark"] .badge-pending {
-  background: rgba(212, 155, 106, 0.18) !important;
-  color: #E2AC7E !important;
-  border-color: rgba(212, 155, 106, 0.35) !important;
+  background: rgba(240, 174, 76, 0.18) !important;
+  color: #F7BF6E !important;
+  border-color: rgba(240, 174, 76, 0.35) !important;
 }
 
 [data-theme="dark"] .badge-answered {
-  background: rgba(44, 110, 94, 0.22) !important;
-  color: #7CD1BD !important;
-  border-color: rgba(44, 110, 94, 0.4) !important;
+  background: rgba(59, 138, 245, 0.2) !important;
+  color: #82B6F9 !important;
+  border-color: rgba(59, 138, 245, 0.4) !important;
 }
 
 [data-theme="dark"] .badge-resolved {
-  background: rgba(52, 158, 115, 0.2) !important;
-  color: #8DE0BD !important;
-  border-color: rgba(52, 158, 115, 0.4) !important;
+  background: rgba(34, 197, 126, 0.2) !important;
+  color: #70E2B0 !important;
+  border-color: rgba(34, 197, 126, 0.4) !important;
 }
 
 [data-theme="dark"] .badge-urgent {
-  background: rgba(217, 83, 79, 0.2) !important;
+  background: rgba(239, 83, 80, 0.2) !important;
   color: #FCA5A5 !important;
-  border-color: rgba(217, 83, 79, 0.4) !important;
+  border-color: rgba(239, 83, 79, 0.4) !important;
 }
 
 [data-theme="dark"] .badge-high {
-  background: rgba(212, 155, 106, 0.2) !important;
+  background: rgba(240, 174, 76, 0.2) !important;
   color: #FDBA74 !important;
-  border-color: rgba(212, 155, 106, 0.4) !important;
+  border-color: rgba(240, 174, 76, 0.4) !important;
 }
 
 [data-theme="dark"] .badge-medium {
-  background: rgba(212, 155, 106, 0.15) !important;
-  color: #FDE047 !important;
-  border-color: rgba(212, 155, 106, 0.3) !important;
+  background: rgba(59, 138, 245, 0.18) !important;
+  color: #93C5FD !important;
+  border-color: rgba(59, 138, 245, 0.35) !important;
 }
 
 [data-theme="dark"] .badge-low {
-  background: rgba(142, 155, 149, 0.18) !important;
-  color: #CBD5D0 !important;
-  border-color: rgba(142, 155, 149, 0.35) !important;
+  background: rgba(173, 195, 219, 0.18) !important;
+  color: #CBD5E1 !important;
+  border-color: rgba(173, 195, 219, 0.35) !important;
 }
 
 /* Tooltip and Recharts in Dark Mode */

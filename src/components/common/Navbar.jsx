@@ -90,11 +90,11 @@ export function Navbar() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                boxShadow: '0 2px 6px rgba(23, 63, 53, 0.25)',
+                boxShadow: '0 2px 8px rgba(40, 120, 229, 0.25)',
                 border: '1px solid rgba(255, 255, 255, 0.15)'
               }}
             >
-              <Sparkles size={20} color="var(--accent-copper)" />
+              <Sparkles size={20} color="#FFFFFF" />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -216,7 +216,7 @@ export function Navbar() {
                 cursor: 'pointer',
                 transition: 'all 150ms',
                 background: role === 'admin' ? 'var(--bg-card)' : 'transparent',
-                color: role === 'admin' ? '#4338ca' : 'var(--text-muted)',
+                color: role === 'admin' ? 'var(--primary)' : 'var(--text-muted)',
                 boxShadow: role === 'admin' ? 'var(--shadow-xs)' : 'none'
               }}
             >
@@ -238,7 +238,7 @@ export function Navbar() {
             {theme === 'dark' ? (
               <Sun size={15} color="#f59e0b" style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.4))' }} />
             ) : (
-              <Moon size={15} color="#4f46e5" />
+              <Moon size={15} color="var(--primary)" />
             )}
           </button>
 

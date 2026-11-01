@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
-  const { login, registerStudent, resetUserPassword, loginWithGoogle, isConfigured, isFirebaseConfigured } = useApp();
+  const { login, registerStudent, resetUserPassword, loginWithGoogle, supabaseHealth, isSupabaseConnected } = useApp();
 
   const [view, setView] = useState(initialView); // 'login' | 'register' | 'forgot'
   const [roleHint, setRoleHint] = useState('student'); // 'student' | 'faculty' | 'admin'
@@ -258,17 +258,17 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
           </button>
         </div>
 
-        {/* Database Config Notice */}
-        {!isConfigured && (
+        {/* Backend Diagnostics Notice */}
+        {supabaseHealth && !supabaseHealth.ok && (
           <div
             style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: '10px',
+              background: supabaseHealth.status === 'missing_credentials' ? '#FEF7EC' : '#FDF1F1',
+              border: `1px solid ${supabaseHealth.status === 'missing_credentials' ? '#FCE8C8' : '#F9CDCD'}`,
+              borderRadius: '8px',
               padding: '0.75rem 1rem',
               marginBottom: '1.25rem',
               fontSize: '0.8rem',
-              color: '#d97706',
+              color: supabaseHealth.status === 'missing_credentials' ? '#C0791B' : '#D9383A',
               display: 'flex',
               alignItems: 'flex-start',
               gap: '0.5rem',
@@ -276,7 +276,8 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
           >
             <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
             <div>
-              <strong>Demo Environment Active:</strong> Supabase credentials (.env) are being configured. You can test in live demo mode or configure your Supabase URL & Key in <code>.env</code>.
+              <strong>{supabaseHealth.status === 'missing_credentials' ? 'Supabase Configuration Required:' : 'Backend Connection Notice:'}</strong>{' '}
+              {supabaseHealth.message}
             </div>
           </div>
         )}

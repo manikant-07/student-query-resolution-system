@@ -7,6 +7,7 @@ import { evaluateExpertRules, calculateBayesianCategory } from '../utils/aiEngin
 import {
   supabase,
   isSupabaseConfigured,
+  checkSupabaseHealth,
   signUpUser,
   signInUser,
   signOutUser,
@@ -123,6 +124,29 @@ export function AppProvider({ children }) {
   const [faqs] = useState(initialFAQs);
   const [notifications, setNotifications] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
+
+  // Live Supabase Backend Health State
+  const [supabaseHealth, setSupabaseHealth] = useState({
+    ok: isSupabaseConfigured,
+    status: isSupabaseConfigured ? 'checking' : 'missing_credentials',
+    message: isSupabaseConfigured ? 'Verifying Supabase connection...' : 'Supabase credentials missing in .env',
+    latency: null,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    checkSupabaseHealth().then(health => {
+      if (isMounted) {
+        setSupabaseHealth(health);
+        if (health.ok) {
+          console.log(`[Supabase] PostgreSQL verified connected (${health.latency}ms)`);
+        } else {
+          console.warn('[Supabase] Health check issue:', health.message);
+        }
+      }
+    });
+    return () => { isMounted = false; };
+  }, []);
 
   // UI Toast notifications
   const [toasts, setToasts] = useState([]);
@@ -324,21 +348,7 @@ export function AppProvider({ children }) {
   // Auth Operations
   const login = async (email, password) => {
     if (!isSupabaseConfigured) {
-      // In demo mode without .env, allow instant role simulation
-      const lower = email.toLowerCase();
-      let detectedRole = 'student';
-      if (lower.includes('admin')) detectedRole = 'admin';
-      else if (lower.includes('roshni') || lower.includes('faculty') || lower.includes('prof')) detectedRole = 'faculty';
-
-      setRole(detectedRole);
-      setCurrentUser({ id: 'demo-user', email });
-      setUserProfile({
-        full_name: detectedRole === 'faculty' ? 'Prof. Roshni Prasad' : detectedRole === 'admin' ? 'Administrator' : 'Manikant Rajpoot',
-        role: detectedRole,
-        email,
-      });
-      showToast(`Signed in successfully as ${detectedRole.toUpperCase()} (Demo Mode)`, 'success');
-      return;
+      throw new Error('Supabase credentials are not configured in .env. Please define VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
     }
 
     const result = await signInUser({ email, password });
@@ -355,8 +365,7 @@ export function AppProvider({ children }) {
 
   const registerStudent = async (studentData) => {
     if (!isSupabaseConfigured) {
-      showToast('Registration simulated (Demo mode). Configure .env for live PostgreSQL users.', 'info');
-      return;
+      throw new Error('Supabase credentials are not configured in .env. Cannot register user in live PostgreSQL.');
     }
 
     await signUpUser(studentData);
@@ -1006,6 +1015,8 @@ export function AppProvider({ children }) {
         currentUser,
         userProfile,
         authLoading,
+        supabaseHealth,
+        isSupabaseConnected: supabaseHealth.ok,
         isConfigured: isSupabaseConfigured || isFirebaseConfigured,
         isFirebaseConfigured,
         dataLoading,

@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' && process.env) ? process.env : {};
-const supabaseUrl = env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || '';
+// Direct static access for Vite bundler, with fallback for Node / runtime environments
+const rawUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_URL)
+  ? import.meta.env.VITE_SUPABASE_URL
+  : (typeof process !== 'undefined' && process.env && process.env.VITE_SUPABASE_URL)
+    ? process.env.VITE_SUPABASE_URL
+    : '';
+
+const rawKey = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY)
+  ? import.meta.env.VITE_SUPABASE_ANON_KEY
+  : (typeof process !== 'undefined' && process.env && process.env.VITE_SUPABASE_ANON_KEY)
+    ? process.env.VITE_SUPABASE_ANON_KEY
+    : '';
+
+export const supabaseUrl = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+export const supabaseAnonKey = typeof rawKey === 'string' ? rawKey.trim() : '';
 
 // Validate if environment variables are populated and not default placeholders
 export const isSupabaseConfigured = Boolean(
@@ -22,6 +34,49 @@ export const supabase = isSupabaseConfigured
       },
     })
   : null;
+
+/**
+ * Live health check: executes a real database query against Supabase PostgreSQL
+ */
+export async function checkSupabaseHealth() {
+  if (!isSupabaseConfigured || !supabase) {
+    return {
+      ok: false,
+      status: 'missing_credentials',
+      message: 'Supabase credentials are not configured. Please define VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.'
+    };
+  }
+
+  const startTime = Date.now();
+  try {
+    const { data, error } = await supabase.from('profiles').select('id').limit(1);
+    const latency = Date.now() - startTime;
+
+    if (error) {
+      return {
+        ok: false,
+        status: 'database_error',
+        code: error.code,
+        message: `Database error (${error.code}): ${error.message}`,
+        latency
+      };
+    }
+
+    return {
+      ok: true,
+      status: 'connected',
+      message: 'Connected to Supabase PostgreSQL',
+      latency
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 'connection_error',
+      message: `Connection error: ${err.message}`,
+      latency: Date.now() - startTime
+    };
+  }
+}
 
 /**
  * ==============================================================================

@@ -86,33 +86,33 @@ export function ArchitectureVivaPage() {
       {/* Page Header */}
       <div
         style={{
-          background: 'var(--primary)',
-          color: '#ffffff',
+          background: 'linear-gradient(135deg, #DCEEFF 0%, #F1F7FD 100%)',
+          color: '#142B4D',
           borderRadius: '16px',
           padding: '2.5rem 2rem',
           marginBottom: '2rem',
           boxShadow: 'var(--shadow-sm)',
-          border: '1px solid rgba(255, 255, 255, 0.15)'
+          border: '1px solid #DFE8F2'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.5rem' }}>
-          <BookOpen size={24} />
-          <h2 style={{ fontSize: '1.75rem', color: '#ffffff' }}>
+          <BookOpen size={24} color="#2878E5" />
+          <h2 style={{ fontSize: '1.75rem', color: '#142B4D', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
             Project Architecture & Viva Voce Guide
           </h2>
         </div>
-        <p style={{ fontSize: '0.95rem', color: '#e0e7ff', maxWidth: '780px', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '0.95rem', color: '#52677F', maxWidth: '780px', lineHeight: 1.6 }}>
           Comprehensive documentation for project defense: system architecture diagrams, data flow lifecycles, full syllabus checklist, implementation disclosures, and curated viva voce questions with model answers.
         </p>
 
         {/* Completion Bar */}
-        <div style={{ marginTop: '1.5rem', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.85rem 1.25rem', backdropFilter: 'blur(8px)', maxWidth: '520px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', marginBottom: '6px' }}>
+        <div style={{ marginTop: '1.5rem', background: '#FFFFFF', borderRadius: '12px', padding: '0.85rem 1.25rem', border: '1px solid #DFE8F2', maxWidth: '520px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', marginBottom: '6px', color: '#142B4D' }}>
             <span>Syllabus Verification Progress</span>
-            <strong>{completedChecks} / {totalChecks} Topics Covered ({completionPercentage}%)</strong>
+            <strong style={{ color: '#2878E5' }}>{completedChecks} / {totalChecks} Topics Covered ({completionPercentage}%)</strong>
           </div>
-          <div style={{ background: 'rgba(255, 255, 255, 0.25)', height: '8px', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ background: '#4ade80', height: '100%', width: `${completionPercentage}%`, transition: 'width 300ms' }}></div>
+          <div style={{ background: '#DFE8F2', height: '8px', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{ background: '#16865B', height: '100%', width: `${completionPercentage}%`, transition: 'width 300ms' }}></div>
           </div>
         </div>
       </div>
