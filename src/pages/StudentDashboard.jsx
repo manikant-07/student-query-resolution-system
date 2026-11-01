@@ -26,6 +26,12 @@ export function StudentDashboard() {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [selectedQuery, setSelectedQuery] = useState(null);
 
+  // Active query derived from live queries array
+  const activeSelectedQuery = useMemo(() => {
+    if (!selectedQuery) return null;
+    return queries.find(q => q.id === selectedQuery.id || (q.dbId && q.dbId === selectedQuery.dbId)) || selectedQuery;
+  }, [queries, selectedQuery]);
+
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -383,8 +389,8 @@ export function StudentDashboard() {
       />
 
       <QueryDetailModal
-        query={selectedQuery}
-        isOpen={Boolean(selectedQuery)}
+        query={activeSelectedQuery}
+        isOpen={Boolean(activeSelectedQuery)}
         onClose={() => setSelectedQuery(null)}
       />
     </div>

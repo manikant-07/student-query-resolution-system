@@ -6,7 +6,6 @@
 -- 1. Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Create Custom Types & Enum (if needed) or check constraints
 -- ==============================================================================
 -- TABLE A: PROFILES
 -- Linked directly to Supabase auth.users
@@ -23,7 +22,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Index on email & role for quick lookups
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
 
@@ -36,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.faculty (
     profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     email TEXT NOT NULL,
-    role_title TEXT DEFAULT 'Faculty',
+    role_title TEXT DEFAULT 'Faculty Advisor',
     department TEXT NOT NULL,
     specialization TEXT[] DEFAULT '{}',
     current_workload INTEGER NOT NULL DEFAULT 0 CHECK (current_workload >= 0),
@@ -173,10 +171,25 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications(user_i
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(user_id, is_read);
 
 -- ==============================================================================
--- 3. TRIGGERS & FUNCTIONS
+-- 2. TRIGGERS & FUNCTIONS
 -- ==============================================================================
 
--- A. Auto-handle new user registration into public.profiles
+-- A. Auto-confirm student user email to permit immediate sign-in
+CREATE OR REPLACE FUNCTION public.auto_confirm_student_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.email_confirmed_at = COALESCE(NEW.email_confirmed_at, NOW());
+    NEW.confirmed_at = COALESCE(NEW.confirmed_at, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_before_insert ON auth.users;
+CREATE TRIGGER on_auth_user_before_insert
+    BEFORE INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.auto_confirm_student_user();
+
+-- B. Auto-handle new user registration into public.profiles
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -186,7 +199,12 @@ DECLARE
     user_dept TEXT;
     user_sem TEXT;
 BEGIN
+    -- Public signups are forced to 'student'. Faculty/Admin must be created via Admin workflows.
     user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'student');
+    IF user_role NOT IN ('student', 'faculty', 'admin') THEN
+        user_role := 'student';
+    END IF;
+
     user_name := COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1));
     user_roll := NEW.raw_user_meta_data->>'enrollment_number';
     user_dept := COALESCE(NEW.raw_user_meta_data->>'department', 'Artificial Intelligence & Data Science');
@@ -214,7 +232,9 @@ BEGIN
     ON CONFLICT (id) DO UPDATE SET
         full_name = EXCLUDED.full_name,
         email = EXCLUDED.email,
-        role = EXCLUDED.role;
+        enrollment_number = COALESCE(EXCLUDED.enrollment_number, profiles.enrollment_number),
+        department = COALESCE(EXCLUDED.department, profiles.department),
+        semester = COALESCE(EXCLUDED.semester, profiles.semester);
 
     -- If registered as faculty, also create an entry in public.faculty
     IF user_role = 'faculty' THEN
@@ -223,13 +243,19 @@ BEGIN
             name,
             email,
             department,
-            role_title
+            role_title,
+            maximum_workload,
+            current_workload,
+            availability_status
         ) VALUES (
             NEW.id,
             user_name,
             NEW.email,
             user_dept,
-            'Assistant Professor'
+            'Faculty Advisor',
+            5,
+            0,
+            TRUE
         )
         ON CONFLICT DO NOTHING;
     END IF;
@@ -243,12 +269,12 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- B. Auto-update queries.updated_at
+-- C. Auto-update queries.updated_at
 CREATE OR REPLACE FUNCTION public.set_query_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
-    IF NEW.status = 'Resolved' AND OLD.status != 'Resolved' THEN
+    IF NEW.status = 'Resolved' AND (OLD.status IS NULL OR OLD.status != 'Resolved') THEN
         NEW.resolved_at = NOW();
     END IF;
     RETURN NEW;
@@ -261,7 +287,7 @@ CREATE TRIGGER set_queries_updated_at
     FOR EACH ROW EXECUTE FUNCTION public.set_query_updated_at();
 
 -- ==============================================================================
--- 4. ROW LEVEL SECURITY (RLS) POLICIES
+-- 3. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -299,6 +325,12 @@ CREATE POLICY "Public profiles can be viewed by authenticated users"
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+CREATE POLICY "Users can insert their own profile"
+    ON public.profiles FOR INSERT
+    TO authenticated
+    WITH CHECK (id = auth.uid());
+
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
     ON public.profiles FOR UPDATE
@@ -316,9 +348,10 @@ CREATE POLICY "Admins can manage all profiles"
 -- RLS: FACULTY
 -- ------------------------------------------------------------------------------
 DROP POLICY IF EXISTS "Everyone can view faculty directory" ON public.faculty;
-CREATE POLICY "Everyone can view faculty directory"
+DROP POLICY IF EXISTS "Anyone can view faculty directory" ON public.faculty;
+CREATE POLICY "Anyone can view faculty directory"
     ON public.faculty FOR SELECT
-    TO authenticated
+    TO public
     USING (true);
 
 DROP POLICY IF EXISTS "Admins or faculty self can update faculty record" ON public.faculty;
@@ -339,8 +372,8 @@ CREATE POLICY "Admins can insert or delete faculty"
 DROP POLICY IF EXISTS "Anyone can read active knowledge rules" ON public.knowledge_rules;
 CREATE POLICY "Anyone can read active knowledge rules"
     ON public.knowledge_rules FOR SELECT
-    TO authenticated
-    USING (true);
+    TO public
+    USING (is_active = true OR public.is_admin());
 
 DROP POLICY IF EXISTS "Only Admins can modify knowledge rules" ON public.knowledge_rules;
 CREATE POLICY "Only Admins can modify knowledge rules"
@@ -351,7 +384,6 @@ CREATE POLICY "Only Admins can modify knowledge rules"
 -- ------------------------------------------------------------------------------
 -- RLS: QUERIES
 -- ------------------------------------------------------------------------------
--- Students see only their own queries; Faculty see assigned or all departmental; Admin sees all
 DROP POLICY IF EXISTS "Students read own queries; Faculty/Admin read assigned/all" ON public.queries;
 CREATE POLICY "Students read own queries; Faculty/Admin read assigned/all"
     ON public.queries FOR SELECT
@@ -362,7 +394,6 @@ CREATE POLICY "Students read own queries; Faculty/Admin read assigned/all"
         OR public.is_admin()
     );
 
--- Students can insert their own queries
 DROP POLICY IF EXISTS "Students can insert queries" ON public.queries;
 CREATE POLICY "Students can insert queries"
     ON public.queries FOR INSERT
@@ -371,7 +402,6 @@ CREATE POLICY "Students can insert queries"
         student_id = auth.uid()
     );
 
--- Faculty can update assigned queries; Admin can update any
 DROP POLICY IF EXISTS "Faculty/Admin can update queries" ON public.queries;
 CREATE POLICY "Faculty/Admin can update queries"
     ON public.queries FOR UPDATE
@@ -379,7 +409,7 @@ CREATE POLICY "Faculty/Admin can update queries"
     USING (
         public.is_admin()
         OR (public.is_faculty() AND (assigned_faculty_id = auth.uid() OR assigned_faculty_id IS NULL))
-        OR student_id = auth.uid() -- students can update helpful feedback count
+        OR student_id = auth.uid()
     );
 
 DROP POLICY IF EXISTS "Admins can delete queries" ON public.queries;
@@ -483,13 +513,12 @@ CREATE POLICY "System/Authenticated users can insert notifications"
     WITH CHECK (true);
 
 -- ==============================================================================
--- 5. SUPABASE STORAGE BUCKET: query-attachments
+-- 4. SUPABASE STORAGE BUCKET: query-attachments
 -- ==============================================================================
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('query-attachments', 'query-attachments', false)
-ON CONFLICT (id) DO NOTHING;
+VALUES ('query-attachments', 'query-attachments', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
 
--- Storage RLS Policies
 DROP POLICY IF EXISTS "Authenticated users can upload attachments" ON storage.objects;
 CREATE POLICY "Authenticated users can upload attachments"
     ON storage.objects FOR INSERT
@@ -499,8 +528,86 @@ CREATE POLICY "Authenticated users can upload attachments"
 DROP POLICY IF EXISTS "Authorized users can read query attachments" ON storage.objects;
 CREATE POLICY "Authorized users can read query attachments"
     ON storage.objects FOR SELECT
-    TO authenticated
+    TO public
     USING (bucket_id = 'query-attachments');
+
+-- ==============================================================================
+-- 5. SECURE ADMIN PROVISIONING & RPC FUNCTIONS
+-- ==============================================================================
+
+-- Admin-only RPC to create faculty members
+CREATE OR REPLACE FUNCTION public.create_faculty_account(
+    p_name TEXT,
+    p_email TEXT,
+    p_department TEXT,
+    p_role_title TEXT DEFAULT 'Faculty Advisor',
+    p_specialization TEXT[] DEFAULT '{}',
+    p_maximum_workload INT DEFAULT 5
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_fac_id UUID;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Access Denied: Only administrators can provision faculty accounts.';
+    END IF;
+
+    INSERT INTO public.faculty (
+        name,
+        email,
+        department,
+        role_title,
+        specialization,
+        current_workload,
+        maximum_workload,
+        availability_status
+    ) VALUES (
+        p_name,
+        p_email,
+        p_department,
+        p_role_title,
+        p_specialization,
+        0,
+        p_maximum_workload,
+        TRUE
+    )
+    RETURNING id INTO v_fac_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'faculty_id', v_fac_id,
+        'message', 'Faculty record created successfully'
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- One-time Initial Admin Setup Bootstrap
+CREATE OR REPLACE FUNCTION public.setup_initial_admin(
+    admin_user_id UUID,
+    admin_full_name TEXT DEFAULT 'Institutional Administrator',
+    admin_dept TEXT DEFAULT 'Academic Governance & Oversight'
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_existing_admin_count INT;
+BEGIN
+    SELECT COUNT(*) INTO v_existing_admin_count
+    FROM public.profiles
+    WHERE role = 'admin';
+
+    IF v_existing_admin_count > 0 THEN
+        RAISE EXCEPTION 'Setup locked: An administrator already exists in the system.';
+    END IF;
+
+    UPDATE public.profiles
+    SET role = 'admin',
+        full_name = admin_full_name,
+        department = admin_dept
+    WHERE id = admin_user_id;
+
+    RETURN jsonb_build_object('success', true, 'message', 'Initial administrator successfully initialized.');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ==============================================================================
 -- 6. SEED KNOWLEDGE RULES (From Academic Regulations Base)
@@ -527,6 +634,3 @@ VALUES
 ('Er. Amit Saxena', 'amit.saxena@college.edu', 'Systems Administrator', 'IT & Campus Infrastructure', ARRAY['Campus Networking', 'ERP Portals', 'Wi-Fi Infrastructure'], 2, 6, true),
 ('Dr. Sunita Kulkarni', 'sunita.kulkarni@college.edu', 'Dean of Student Welfare & Warden', 'Hostel & Welfare Administration', ARRAY['Student Welfare', 'Disciplinary Affairs', 'Residential Safety'], 1, 5, false)
 ON CONFLICT DO NOTHING;
-
--- Schema setup complete
-

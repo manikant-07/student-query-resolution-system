@@ -106,12 +106,18 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
         enrollmentNumber: enrollmentNumber.trim(),
         department,
         semester,
-        role: 'student',
       });
-      setSuccessMsg('Account created successfully! Check your email to confirm registration or sign in immediately.');
-      setTimeout(() => {
-        setView('login');
-      }, 2000);
+
+      setSuccessMsg('Student account created successfully! Signing you in...');
+      try {
+        await login(email.trim(), password);
+        onClose();
+      } catch {
+        setSuccessMsg('Account registered! Please sign in with your credentials.');
+        setTimeout(() => {
+          setView('login');
+        }, 1500);
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg(err.message || 'Registration failed.');
@@ -392,8 +398,6 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
         {/* VIEW 1: SIGN IN */}
         {view === 'login' && (
           <form onSubmit={handleLogin}>
-            {renderRoleHelper()}
-
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <Mail size={14} />
@@ -402,7 +406,7 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
               <input
                 type="email"
                 className="form-input"
-                placeholder="name@college.edu"
+                placeholder="name@college.edu or gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -446,7 +450,7 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
               style={{ width: '100%', marginTop: '0.5rem' }}
               disabled={loading}
             >
-              {loading ? 'Authenticating...' : 'Sign In to Portal'}
+              {loading ? 'Authenticating with Supabase...' : 'Sign In to Portal'}
             </button>
           </form>
         )}
@@ -454,6 +458,28 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
         {/* VIEW 2: STUDENT REGISTRATION */}
         {view === 'register' && (
           <form onSubmit={handleRegister}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.65rem 0.85rem',
+                borderRadius: '10px',
+                background: 'var(--primary-light)',
+                border: '1px solid var(--primary-glow)',
+                marginBottom: '1.25rem',
+                fontSize: '0.78rem',
+                color: 'var(--primary)',
+                fontWeight: 600,
+                lineHeight: 1.4,
+              }}
+            >
+              <GraduationCap size={18} style={{ flexShrink: 0 }} />
+              <span>
+                <strong>Student Self-Registration:</strong> Faculty and Administrator accounts are provisioned exclusively by Institutional Administration.
+              </span>
+            </div>
+
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <User size={14} />

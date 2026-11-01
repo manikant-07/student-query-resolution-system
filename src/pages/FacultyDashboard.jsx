@@ -5,16 +5,16 @@ import { FacultyReplyModal } from '../components/faculty/FacultyReplyModal';
 import { CSPOptimizerModal } from '../components/faculty/CSPOptimizerModal';
 import { QueryDetailModal } from '../components/student/QueryDetailModal';
 import { AnalyticsCharts } from '../components/faculty/AnalyticsCharts';
-import { 
-  Users, 
-  Cpu, 
-  MessageSquare, 
-  Search, 
-  Filter, 
-  ArrowUpDown, 
-  UserCheck, 
-  Send, 
-  CheckCircle, 
+import {
+  Users,
+  Cpu,
+  MessageSquare,
+  Search,
+  Filter,
+  ArrowUpDown,
+  UserCheck,
+  Send,
+  CheckCircle,
   AlertTriangle,
   Clock,
   Briefcase,
@@ -29,6 +29,17 @@ export function FacultyDashboard() {
   const [selectedQueryForReply, setSelectedQueryForReply] = useState(null);
   const [selectedQueryForDetail, setSelectedQueryForDetail] = useState(null);
   const [isCSPOpen, setIsCSPOpen] = useState(false);
+
+  // Derive active query from live queries array
+  const activeSelectedQueryForReply = useMemo(() => {
+    if (!selectedQueryForReply) return null;
+    return queries.find(q => q.id === selectedQueryForReply.id || (q.dbId && q.dbId === selectedQueryForReply.dbId)) || selectedQueryForReply;
+  }, [queries, selectedQueryForReply]);
+
+  const activeSelectedQueryForDetail = useMemo(() => {
+    if (!selectedQueryForDetail) return null;
+    return queries.find(q => q.id === selectedQueryForDetail.id || (q.dbId && q.dbId === selectedQueryForDetail.dbId)) || selectedQueryForDetail;
+  }, [queries, selectedQueryForDetail]);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,10 +59,10 @@ export function FacultyDashboard() {
       const matchCat = categoryFilter === 'All' || q.category === categoryFilter;
       const matchStatus = statusFilter === 'All' || q.status === statusFilter;
       const matchPriority = priorityFilter === 'All' || q.priority === priorityFilter;
-      
+
       const matchScope = scopeFilter === 'All' ? true :
-                         scopeFilter === 'MyAssigned' ? (q.assignedTo === facultyUser.name || q.assignedFacultyId === currentUser?.id) :
-                         q.assignedTo === 'Unassigned' || !q.assignedTo;
+        scopeFilter === 'MyAssigned' ? (q.assignedTo === facultyUser.name || q.assignedFacultyId === currentUser?.id) :
+          q.assignedTo === 'Unassigned' || !q.assignedTo;
 
       const term = searchTerm.toLowerCase();
       const matchSearch = !searchTerm ||
@@ -386,14 +397,14 @@ export function FacultyDashboard() {
 
       {/* Modals */}
       <FacultyReplyModal
-        query={selectedQueryForReply}
-        isOpen={Boolean(selectedQueryForReply)}
+        query={activeSelectedQueryForReply}
+        isOpen={Boolean(activeSelectedQueryForReply)}
         onClose={() => setSelectedQueryForReply(null)}
       />
 
       <QueryDetailModal
-        query={selectedQueryForDetail}
-        isOpen={Boolean(selectedQueryForDetail)}
+        query={activeSelectedQueryForDetail}
+        isOpen={Boolean(activeSelectedQueryForDetail)}
         onClose={() => setSelectedQueryForDetail(null)}
       />
 

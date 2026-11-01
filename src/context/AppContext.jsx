@@ -20,6 +20,7 @@ import {
   fetchFacultyFromDB,
   updateFacultyInDB,
   insertFacultyToDB,
+  createFacultyAccountByAdmin,
   fetchKnowledgeRulesFromDB,
   updateKnowledgeRuleInDB,
   insertKnowledgeRuleToDB,
@@ -143,206 +144,126 @@ export function AppProvider({ children }) {
     setIsAuthModalOpen(false);
   };
 
-  // 1. Initial Auth Check and Persistent Listener (Firebase Auth + Supabase + Fallback)
+  // 1. Initial Auth Check and Persistent Session Listener (Supabase Auth)
   useEffect(() => {
     let isMounted = true;
 
-    // A. Real Firebase Authentication with Google Sign-In
-    if (isFirebaseConfigured && auth) {
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const restoreSession = async () => {
+      try {
+        if (!isSupabaseConfigured || !supabase) {
+          setAuthLoading(false);
+          return;
+        }
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn('Supabase getSession warning:', error.message);
+        }
+
+        if (session?.user && isMounted) {
+          setCurrentUser(session.user);
+          const profile = await fetchUserProfile(session.user.id);
+          if (profile && isMounted) {
+            setUserProfile(profile);
+            setRole(profile.role || 'student');
+          }
+        }
+      } catch (err) {
+        console.error('Session restore error:', err);
+      } finally {
+        if (isMounted) setAuthLoading(false);
+      }
+    };
+
+    restoreSession();
+
+    let authSub = null;
+    if (isSupabaseConfigured && supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (!isMounted) return;
 
-        if (firebaseUser) {
-          const userObj = {
-            id: firebaseUser.uid,
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-          };
-          setCurrentUser(userObj);
-
-          try {
-            // Retrieve user profile from Firestore
-            let profile = await getUserProfileFromFirestore(firebaseUser.uid);
-            if (profile) {
-              setUserProfile(profile);
-              setRole(profile.role || 'student');
-              if (!profile.is_profile_complete) {
-                setIsOnboardingModalOpen(true);
-              }
-            } else {
-              // Create initial profile upon first Google login
-              const initialProf = {
-                uid: firebaseUser.uid,
-                full_name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-                email: firebaseUser.email,
-                photo_url: firebaseUser.photoURL || '',
-                role: 'student',
-                is_profile_complete: false,
-                created_at: new Date().toISOString(),
-              };
-              await saveUserProfileToFirestore(firebaseUser.uid, initialProf);
-              setUserProfile(initialProf);
-              setRole('student');
-              setIsOnboardingModalOpen(true);
-            }
-          } catch (e) {
-            console.error('Error fetching Firestore profile:', e);
-          }
-        } else {
-          // If not logged in via Firebase, check if Supabase session exists
-          if (isSupabaseConfigured && supabase) {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              setCurrentUser(session.user);
-              const profile = await fetchUserProfile(session.user.id);
-              if (profile) {
-                setUserProfile(profile);
-                setRole(profile.role || 'student');
-              }
-            }
-          }
-        }
-        setAuthLoading(false);
-      });
-
-      return () => {
-        isMounted = false;
-        unsubscribe();
-      };
-    }
-
-    // B. Supabase Auth if Firebase not configured
-    if (isSupabaseConfigured && supabase) {
-      const checkSession = async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            setCurrentUser(session.user);
-            const profile = await fetchUserProfile(session.user.id);
-            if (profile) {
-              setUserProfile(profile);
-              setRole(profile.role || 'student');
-            }
-          }
-        } catch (err) {
-          console.error('Session check error:', err);
-        } finally {
-          setAuthLoading(false);
-        }
-      };
-
-      checkSession();
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
           setCurrentUser(session.user);
           const profile = await fetchUserProfile(session.user.id);
-          if (profile) {
+          if (profile && isMounted) {
             setUserProfile(profile);
             setRole(profile.role || 'student');
           }
         } else {
           setCurrentUser(null);
           setUserProfile(null);
+          setRole('student');
         }
+        setAuthLoading(false);
       });
-
-      return () => {
-        isMounted = false;
-        subscription?.unsubscribe();
-      };
+      authSub = subscription;
     }
 
-    // C. Demo Mode Persistent Session Restoration (when .env is unconfigured)
-    try {
-      const savedSession = localStorage.getItem('ai_pbl_demo_google_session');
-      if (savedSession) {
-        const parsed = JSON.parse(savedSession);
-        if (parsed?.user) {
-          setCurrentUser(parsed.user);
-          setUserProfile(parsed.profile);
-          setRole(parsed.profile?.role || 'student');
-          if (!parsed.profile?.is_profile_complete) {
-            setIsOnboardingModalOpen(true);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn(e);
-    } finally {
-      setAuthLoading(false);
-    }
+    return () => {
+      isMounted = false;
+      if (authSub) authSub.unsubscribe();
+    };
   }, []);
 
-  // 2. Fetch Live Database Records (PostgreSQL + Firestore)
+  // 2. Fetch Live Database Records (100% Supabase PostgreSQL Backed)
   const loadDatabaseData = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+
     try {
       setDataLoading(true);
 
-      // A. Fetch from Firestore if Firebase is configured
-      if (isFirebaseConfigured) {
-        const fsQueries = await fetchQueriesFromFirestore({
-          role,
-          userId: currentUser?.uid || currentUser?.id,
-          userEmail: currentUser?.email,
-        });
-        if (fsQueries && fsQueries.length > 0) {
-          setQueries(prev => {
-            const fsMap = new Map(fsQueries.map(q => [q.id, q]));
-            const merged = [...fsQueries];
-            prev.forEach(p => {
-              if (!fsMap.has(p.id)) {
-                merged.push(p);
-              }
-            });
-            return merged;
-          });
-        }
-      }
-
-      if (!isSupabaseConfigured) return;
-
-      // B. Fetch Queries from Supabase PostgreSQL
+      // A. Fetch Queries from Supabase PostgreSQL
       const dbQueries = await fetchQueriesFromDB({
         role,
         userId: currentUser?.id,
       });
-      if (dbQueries && dbQueries.length > 0) {
+
+      if (currentUser?.id) {
+        // Authenticated users strictly see their real database inquiries
         setQueries(dbQueries);
+      } else {
+        // Public/guest overview
+        setQueries(dbQueries && dbQueries.length > 0 ? dbQueries : initialQueries);
       }
 
-      // C. Fetch Faculty Directory
+      // B. Fetch Faculty Directory from Supabase PostgreSQL
       const dbFaculty = await fetchFacultyFromDB();
       if (dbFaculty && dbFaculty.length > 0) {
         setFaculty(dbFaculty);
+      } else {
+        setFaculty(facultyList);
       }
 
-      // D. Fetch Knowledge Rules
+      // C. Fetch Knowledge Rules from Supabase PostgreSQL
       const dbRules = await fetchKnowledgeRulesFromDB();
       if (dbRules && dbRules.length > 0) {
         setKnowledgeRules(dbRules);
+      } else {
+        setKnowledgeRules(defaultKnowledgeRules);
       }
 
-      // E. Fetch Notifications
+      // D. Fetch In-App Notifications from Supabase PostgreSQL
       if (currentUser?.id) {
         const dbNotifs = await fetchNotificationsFromDB(currentUser.id);
         setNotifications(dbNotifs);
+      } else {
+        setNotifications([]);
       }
 
-      // F. Fetch Registered Students (if admin/faculty)
+      // E. Fetch Registered Students from Supabase PostgreSQL (if admin/faculty)
       if (role === 'admin' || role === 'faculty') {
         const { data: studentsData } = await supabase
           .from('profiles')
           .select('*')
-          .eq('role', 'student');
+          .eq('role', 'student')
+          .order('created_at', { ascending: false });
+
         if (studentsData && studentsData.length > 0) {
           setRegisteredStudents(studentsData);
         }
       }
     } catch (err) {
-      console.error('Error loading live DB data:', err);
+      console.error('Error loading live DB data from Supabase:', err);
     } finally {
       setDataLoading(false);
     }
@@ -362,6 +283,12 @@ export function AppProvider({ children }) {
         loadDatabaseData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'query_responses' }, () => {
+        loadDatabaseData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'faculty' }, () => {
+        loadDatabaseData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'knowledge_rules' }, () => {
         loadDatabaseData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
@@ -591,7 +518,9 @@ export function AppProvider({ children }) {
       try {
         const savedQuery = await insertQueryToDB(newQueryObj);
         const queryDbId = savedQuery?.id;
+        const actualQueryNumber = savedQuery?.query_number || newId;
 
+        let uploadedAttachments = [];
         // Upload attachment to Supabase Storage if provided
         if (attachmentFile && queryDbId) {
           const uploadedAtt = await uploadQueryAttachment({
@@ -600,14 +529,13 @@ export function AppProvider({ children }) {
             userId: currentUser.id,
           });
           if (uploadedAtt) {
-            newQueryObj.attachments = [{
+            uploadedAttachments = [{
               id: uploadedAtt.id,
               fileName: uploadedAtt.file_name,
               filePath: uploadedAtt.file_path,
               fileSize: uploadedAtt.file_size,
               fileType: uploadedAtt.file_type,
             }];
-            setQueries(prev => prev.map(q => q.id === newId ? { ...q, attachments: newQueryObj.attachments } : q));
           }
         }
 
@@ -627,10 +555,30 @@ export function AppProvider({ children }) {
         await createNotificationInDB({
           userId: currentUser.id,
           queryId: queryDbId,
-          message: `Query ${newId} (${formData.subject}) has been successfully submitted and saved to PostgreSQL.`,
+          message: `Query ${actualQueryNumber} (${formData.subject}) has been successfully submitted and saved to PostgreSQL.`,
         });
 
-        showToast(`Query ${newId} saved permanently in PostgreSQL! AI suggestions attached.`, 'success');
+        // Update queries state with the real dbId, query_number, and attachments
+        setQueries(prev => prev.map(q => {
+          if (q.id === newId) {
+            return {
+              ...q,
+              id: actualQueryNumber,
+              dbId: queryDbId,
+              attachments: uploadedAttachments.length > 0 ? uploadedAttachments : q.attachments,
+            };
+          }
+          return q;
+        }));
+
+        showToast(`Query ${actualQueryNumber} saved permanently in PostgreSQL! AI suggestions attached.`, 'success');
+
+        return {
+          ...newQueryObj,
+          id: actualQueryNumber,
+          dbId: queryDbId,
+          attachments: uploadedAttachments,
+        };
       } catch (err) {
         console.error('DB Insert error:', err);
         showToast('Error saving query to database: ' + err.message, 'error');
@@ -648,7 +596,7 @@ export function AppProvider({ children }) {
     const authorRole = role === 'faculty' ? (userProfile?.role || 'Faculty') : 'Student';
     const authorId = currentUser?.id || 'demo-author-id';
 
-    const targetQuery = queries.find(q => q.id === queryId);
+    const targetQuery = queries.find(q => q.id === queryId || q.dbId === queryId);
     const resolvedStatus = newStatus || (targetQuery?.status === 'Pending' ? 'Answered' : targetQuery?.status || 'Answered');
 
     const newReply = {
@@ -662,7 +610,7 @@ export function AppProvider({ children }) {
 
     // Update UI state
     setQueries(prev => prev.map(q => {
-      if (q.id === queryId) {
+      if (q.id === queryId || q.dbId === queryId) {
         const historyEntry = resolvedStatus !== q.status ? [{
           id: `hist-${Date.now()}`,
           oldStatus: q.status,
@@ -683,10 +631,11 @@ export function AppProvider({ children }) {
     }));
 
     // Save to Database
-    if (isSupabaseConfigured && targetQuery?.dbId) {
+    const queryDbIdentifier = targetQuery?.dbId || targetQuery?.id || queryId;
+    if (isSupabaseConfigured && queryDbIdentifier) {
       try {
         await insertResponseToDB({
-          queryDbId: targetQuery.dbId,
+          queryDbId: queryDbIdentifier,
           authorId,
           authorName,
           authorRole,
@@ -694,11 +643,11 @@ export function AppProvider({ children }) {
           isOfficial: role === 'faculty' || role === 'admin',
         });
 
-        if (resolvedStatus !== targetQuery.status) {
-          await updateQueryInDB(targetQuery.dbId, { status: resolvedStatus });
+        if (resolvedStatus !== targetQuery?.status) {
+          await updateQueryInDB(queryDbIdentifier, { status: resolvedStatus });
           await insertStatusHistoryToDB({
-            queryDbId: targetQuery.dbId,
-            oldStatus: targetQuery.status,
+            queryDbId: queryDbIdentifier,
+            oldStatus: targetQuery?.status,
             newStatus: resolvedStatus,
             changedBy: authorId,
             changedByName: authorName,
@@ -707,10 +656,10 @@ export function AppProvider({ children }) {
         }
 
         // Notify student if replied by faculty
-        if ((role === 'faculty' || role === 'admin') && targetQuery.studentId) {
+        if ((role === 'faculty' || role === 'admin') && targetQuery?.studentId) {
           await createNotificationInDB({
             userId: targetQuery.studentId,
-            queryId: targetQuery.dbId,
+            queryId: queryDbIdentifier,
             message: `Faculty ${authorName} posted an official response to your query ${queryId}.`,
           });
         }
@@ -727,11 +676,11 @@ export function AppProvider({ children }) {
 
   // 6. Update Query Status Directly
   const updateQueryStatus = async (queryId, newStatus, remarks = '') => {
-    const targetQuery = queries.find(q => q.id === queryId);
+    const targetQuery = queries.find(q => q.id === queryId || q.dbId === queryId);
     const changerName = userProfile?.full_name || (role === 'faculty' ? defaultFaculty.name : 'Administrator');
 
     setQueries(prev => prev.map(q => {
-      if (q.id === queryId) {
+      if (q.id === queryId || q.dbId === queryId) {
         return {
           ...q,
           status: newStatus,
@@ -751,22 +700,23 @@ export function AppProvider({ children }) {
       return q;
     }));
 
-    if (isSupabaseConfigured && targetQuery?.dbId) {
+    const queryDbIdentifier = targetQuery?.dbId || targetQuery?.id || queryId;
+    if (isSupabaseConfigured && queryDbIdentifier) {
       try {
-        await updateQueryInDB(targetQuery.dbId, { status: newStatus });
+        await updateQueryInDB(queryDbIdentifier, { status: newStatus });
         await insertStatusHistoryToDB({
-          queryDbId: targetQuery.dbId,
-          oldStatus: targetQuery.status,
+          queryDbId: queryDbIdentifier,
+          oldStatus: targetQuery?.status,
           newStatus,
           changedBy: currentUser?.id,
           changedByName: changerName,
           remarks: remarks || `Status updated to ${newStatus}`,
         });
 
-        if (targetQuery.studentId) {
+        if (targetQuery?.studentId) {
           await createNotificationInDB({
             userId: targetQuery.studentId,
-            queryId: targetQuery.dbId,
+            queryId: queryDbIdentifier,
             message: `Your query ${queryId} has been updated to "${newStatus}".`,
           });
         }
@@ -780,11 +730,11 @@ export function AppProvider({ children }) {
 
   // 7. Assign Query to Faculty Member
   const assignQuery = async (queryId, facultyName, departmentName) => {
-    const targetQuery = queries.find(q => q.id === queryId);
+    const targetQuery = queries.find(q => q.id === queryId || q.dbId === queryId);
     const assignedFac = faculty.find(f => f.name === facultyName);
 
     setQueries(prev => prev.map(q => {
-      if (q.id === queryId) {
+      if (q.id === queryId || q.dbId === queryId) {
         return {
           ...q,
           assignedTo: facultyName,
@@ -803,11 +753,12 @@ export function AppProvider({ children }) {
       return f;
     }));
 
-    if (isSupabaseConfigured && targetQuery?.dbId) {
+    const queryDbIdentifier = targetQuery?.dbId || targetQuery?.id || queryId;
+    if (isSupabaseConfigured && queryDbIdentifier) {
       try {
-        await updateQueryInDB(targetQuery.dbId, {
+        await updateQueryInDB(queryDbIdentifier, {
           assigned_to_name: facultyName,
-          assigned_dept: departmentName || targetQuery.assignedDept,
+          assigned_dept: departmentName || targetQuery?.assignedDept,
           assigned_faculty_id: assignedFac?.profileId || null,
         });
 
@@ -820,8 +771,8 @@ export function AppProvider({ children }) {
         if (assignedFac?.profileId) {
           await createNotificationInDB({
             userId: assignedFac.profileId,
-            queryId: targetQuery.dbId,
-            message: `New query ${queryId} (${targetQuery.subject}) has been assigned to you.`,
+            queryId: queryDbIdentifier,
+            message: `New query ${queryId} (${targetQuery?.subject || ''}) has been assigned to you.`,
           });
         }
       } catch (err) {
@@ -847,9 +798,10 @@ export function AppProvider({ children }) {
 
     if (isSupabaseConfigured) {
       for (const [qId, facName] of entries) {
-        const matchingQuery = queries.find(q => q.id === qId);
-        if (matchingQuery?.dbId) {
-          await updateQueryInDB(matchingQuery.dbId, { assigned_to_name: facName });
+        const matchingQuery = queries.find(q => q.id === qId || q.dbId === qId);
+        const queryDbIdentifier = matchingQuery?.dbId || matchingQuery?.id || qId;
+        if (queryDbIdentifier) {
+          await updateQueryInDB(queryDbIdentifier, { assigned_to_name: facName });
         }
       }
     }
@@ -860,7 +812,7 @@ export function AppProvider({ children }) {
   // 9. Feedback vote
   const voteQueryFeedback = async (queryId, isHelpful) => {
     setQueries(prev => prev.map(q => {
-      if (q.id === queryId) {
+      if (q.id === queryId || q.dbId === queryId) {
         const currentFeedback = q.feedback || { helpful: 0, notHelpful: 0, userVoted: null };
         if (currentFeedback.userVoted === (isHelpful ? 'helpful' : 'notHelpful')) {
           return q;
@@ -871,8 +823,9 @@ export function AppProvider({ children }) {
           userVoted: isHelpful ? 'helpful' : 'notHelpful',
         };
 
-        if (isSupabaseConfigured && q.dbId) {
-          updateQueryInDB(q.dbId, {
+        const queryDbIdentifier = q.dbId || q.id || queryId;
+        if (isSupabaseConfigured && queryDbIdentifier) {
+          updateQueryInDB(queryDbIdentifier, {
             feedback_helpful: updated.helpful,
             feedback_not_helpful: updated.notHelpful,
           }).catch(console.error);
@@ -898,7 +851,11 @@ export function AppProvider({ children }) {
 
     if (isSupabaseConfigured) {
       try {
-        await insertFacultyToDB(facultyData);
+        await createFacultyAccountByAdmin(facultyData);
+        const updatedFacultyList = await fetchFacultyFromDB();
+        if (updatedFacultyList && updatedFacultyList.length > 0) {
+          setFaculty(updatedFacultyList);
+        }
         showToast(`Faculty ${facultyData.name} saved to PostgreSQL database!`, 'success');
       } catch (err) {
         showToast('Error saving faculty: ' + err.message, 'error');

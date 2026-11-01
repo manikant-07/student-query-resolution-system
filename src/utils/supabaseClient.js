@@ -17,6 +17,7 @@ export const supabase = isSupabaseConfigured
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
       },
     })
   : null;
@@ -27,26 +28,46 @@ export const supabase = isSupabaseConfigured
  * ==============================================================================
  */
 
-export async function signUpUser({ email, password, fullName, enrollmentNumber, department, semester, role = 'student' }) {
+// Public student registration - role is STRICTLY student. Admin/Faculty selection forbidden.
+export async function signUpUser({ email, password, fullName, enrollmentNumber, department, semester }) {
   if (!isSupabaseConfigured) {
     throw new Error('Supabase is not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.');
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = fullName.trim();
+  const cleanRoll = enrollmentNumber ? enrollmentNumber.trim() : '';
+
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: cleanEmail,
     password,
     options: {
       data: {
-        full_name: fullName,
-        enrollment_number: enrollmentNumber,
-        department,
-        semester,
-        role: role.toLowerCase(),
+        full_name: cleanName,
+        enrollment_number: cleanRoll,
+        department: department || 'Artificial Intelligence & Data Science',
+        semester: semester || '4th Semester',
+        role: 'student', // ALWAYS strictly 'student' for public signups!
       },
     },
   });
 
   if (error) throw error;
+
+  // If user session is created immediately (auto-confirmed)
+  if (data?.user) {
+    // Ensure profile row exists in public.profiles table
+    await ensureProfileRecord({
+      id: data.user.id,
+      full_name: cleanName,
+      email: cleanEmail,
+      enrollment_number: cleanRoll,
+      department: department || 'Artificial Intelligence & Data Science',
+      semester: semester || '4th Semester',
+      role: 'student',
+    });
+  }
+
   return data;
 }
 
@@ -56,7 +77,7 @@ export async function signInUser({ email, password }) {
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: email.trim().toLowerCase(),
     password,
   });
 
@@ -66,15 +87,19 @@ export async function signInUser({ email, password }) {
 
 export async function signOutUser() {
   if (!isSupabaseConfigured) return;
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Sign out error:', error);
+  } catch (err) {
+    console.error('Sign out error:', err);
+  }
 }
 
 export async function resetPasswordForEmail(email) {
   if (!isSupabaseConfigured) {
     throw new Error('Supabase is not configured. Please add credentials.');
   }
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
     redirectTo: `${window.location.origin}/#/reset-password`,
   });
   if (error) throw error;
@@ -92,118 +117,165 @@ export async function updateAccountPassword(newPassword) {
   return data;
 }
 
+// Fetch verified user profile directly from PostgreSQL public.profiles
 export async function fetchUserProfile(userId) {
   if (!isSupabaseConfigured || !userId) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
 
-  if (error) {
-    console.error('Error fetching user profile:', error);
-    return null;
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Error fetching profile from DB:', error.message);
+    }
+
+    if (data) return data;
+
+    // Fallback: If trigger did not run yet, construct from active auth metadata and upsert
+    const { data: authData } = await supabase.auth.getUser();
+    if (authData?.user && authData.user.id === userId) {
+      const meta = authData.user.user_metadata || {};
+      const fallbackProfile = {
+        id: userId,
+        full_name: meta.full_name || authData.user.email.split('@')[0],
+        email: authData.user.email,
+        enrollment_number: meta.enrollment_number || null,
+        department: meta.department || 'Artificial Intelligence & Data Science',
+        semester: meta.semester || '4th Semester',
+        role: meta.role === 'admin' ? 'admin' : meta.role === 'faculty' ? 'faculty' : 'student',
+        created_at: new Date().toISOString(),
+      };
+
+      await supabase.from('profiles').upsert(fallbackProfile).select().maybeSingle();
+      return fallbackProfile;
+    }
+  } catch (err) {
+    console.error('fetchUserProfile exception:', err);
   }
-  return data;
+
+  return null;
+}
+
+// Ensure profile row exists in public.profiles table
+async function ensureProfileRecord(profileData) {
+  if (!isSupabaseConfigured || !profileData.id) return;
+  try {
+    await supabase.from('profiles').upsert(profileData, { onConflict: 'id' });
+  } catch (e) {
+    console.warn('ensureProfileRecord error:', e);
+  }
 }
 
 /**
  * ==============================================================================
- * DATABASE QUERIES & CRUD
+ * DATABASE QUERIES & CRUD (100% POSTGRESQL BACKED)
  * ==============================================================================
  */
 
 export async function fetchQueriesFromDB({ role, userId }) {
   if (!isSupabaseConfigured) return [];
 
-  let query = supabase
-    .from('queries')
-    .select(`
-      *,
-      responses:query_responses(*),
-      attachments:query_attachments(*),
-      history:query_status_history(*)
-    `)
-    .order('created_at', { ascending: false });
+  try {
+    let queryBuilder = supabase
+      .from('queries')
+      .select(`
+        *,
+        responses:query_responses(*),
+        attachments:query_attachments(*),
+        history:query_status_history(*)
+      `)
+      .order('created_at', { ascending: false });
 
-  // Students see only their own queries
-  if (role === 'student' && userId) {
-    query = query.eq('student_id', userId);
+    // Students strictly only see their own queries
+    if (role === 'student' && userId) {
+      queryBuilder = queryBuilder.eq('student_id', userId);
+    }
+
+    const { data, error } = await queryBuilder;
+    if (error) {
+      console.error('Error fetching queries from DB:', error);
+      throw error;
+    }
+
+    // Map rows cleanly to frontend model
+    return (data || []).map(q => ({
+      id: q.query_number || q.id,
+      dbId: q.id,
+      studentId: q.student_id,
+      studentName: q.student_name,
+      studentRoll: q.student_roll || '',
+      email: q.email,
+      subject: q.title,
+      title: q.title,
+      category: q.category,
+      description: q.description,
+      priority: q.priority,
+      status: q.status,
+      tags: q.tags || [],
+      createdAt: q.created_at,
+      updatedAt: q.updated_at,
+      resolvedAt: q.resolved_at,
+      assignedFacultyId: q.assigned_faculty_id,
+      assignedTo: q.assigned_to_name || 'Unassigned',
+      assignedDept: q.assigned_dept || 'Academic Cell',
+      suggestedAnswer: q.ai_suggestion,
+      certaintyScore: q.confidence_score ? Number(q.confidence_score) : null,
+      matchedRule: q.matched_rule,
+      feedback: {
+        helpful: q.feedback_helpful || 0,
+        notHelpful: q.feedback_not_helpful || 0,
+        userVoted: null,
+      },
+      replies: (q.responses || []).map(r => ({
+        id: r.id,
+        author: r.author_name,
+        role: r.author_role,
+        message: r.response_message,
+        timestamp: r.created_at,
+        isOfficial: r.is_official,
+      })),
+      attachments: (q.attachments || []).map(a => ({
+        id: a.id,
+        fileName: a.file_name,
+        filePath: a.file_path,
+        fileSize: a.file_size,
+        fileType: a.file_type,
+        uploadedBy: a.uploaded_by,
+        createdAt: a.created_at,
+      })),
+      statusHistory: (q.history || []).map(h => ({
+        id: h.id,
+        oldStatus: h.old_status,
+        newStatus: h.new_status,
+        changedByName: h.changed_by_name,
+        remarks: h.remarks,
+        createdAt: h.created_at,
+      })),
+    }));
+  } catch (err) {
+    console.error('fetchQueriesFromDB failed:', err);
+    return [];
   }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error('Error fetching queries from DB:', error);
-    throw error;
-  }
-
-  // Format to match project conventions
-  return (data || []).map(q => ({
-    id: q.query_number || q.id,
-    dbId: q.id,
-    studentId: q.student_id,
-    studentName: q.student_name,
-    studentRoll: q.student_roll || '23AI-104',
-    email: q.email,
-    subject: q.title,
-    title: q.title,
-    category: q.category,
-    description: q.description,
-    priority: q.priority,
-    status: q.status,
-    tags: q.tags || [],
-    createdAt: q.created_at,
-    updatedAt: q.updated_at,
-    resolvedAt: q.resolved_at,
-    assignedFacultyId: q.assigned_faculty_id,
-    assignedTo: q.assigned_to_name || 'Unassigned',
-    assignedDept: q.assigned_dept || 'Academic Cell',
-    suggestedAnswer: q.ai_suggestion,
-    certaintyScore: q.confidence_score ? Number(q.confidence_score) : null,
-    matchedRule: q.matched_rule,
-    feedback: {
-      helpful: q.feedback_helpful || 0,
-      notHelpful: q.feedback_not_helpful || 0,
-      userVoted: null,
-    },
-    replies: (q.responses || []).map(r => ({
-      id: r.id,
-      author: r.author_name,
-      role: r.author_role,
-      message: r.response_message,
-      timestamp: r.created_at,
-      isOfficial: r.is_official,
-    })),
-    attachments: (q.attachments || []).map(a => ({
-      id: a.id,
-      fileName: a.file_name,
-      filePath: a.file_path,
-      fileSize: a.file_size,
-      fileType: a.file_type,
-      uploadedBy: a.uploaded_by,
-      createdAt: a.created_at,
-    })),
-    statusHistory: (q.history || []).map(h => ({
-      id: h.id,
-      oldStatus: h.old_status,
-      newStatus: h.new_status,
-      changedByName: h.changed_by_name,
-      remarks: h.remarks,
-      createdAt: h.created_at,
-    })),
-  }));
 }
 
 export async function insertQueryToDB(queryObj) {
   if (!isSupabaseConfigured) return null;
 
+  // Unique query identifier: e.g. QRY-1007
+  const qNum = queryObj.id && queryObj.id.startsWith('QRY-')
+    ? queryObj.id
+    : `QRY-${Math.floor(1000 + Math.random() * 9000)}`;
+
   const row = {
-    query_number: queryObj.id,
+    query_number: qNum,
     student_id: queryObj.studentId,
     student_name: queryObj.studentName,
-    student_roll: queryObj.studentRoll,
+    student_roll: queryObj.studentRoll || null,
     email: queryObj.email,
-    title: queryObj.subject,
+    title: queryObj.subject || queryObj.title,
     description: queryObj.description,
     category: queryObj.category,
     priority: queryObj.priority || 'Medium',
@@ -223,32 +295,61 @@ export async function insertQueryToDB(queryObj) {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error inserting query into DB:', error);
+    throw error;
+  }
   return data;
 }
 
-export async function updateQueryInDB(queryId, updates) {
-  if (!isSupabaseConfigured) return null;
+// Safely update query by UUID or query_number without UUID casting error
+export async function updateQueryInDB(queryIdentifier, updates) {
+  if (!isSupabaseConfigured || !queryIdentifier) return null;
 
-  // Find record by query_number or id
-  const { data, error } = await supabase
-    .from('queries')
-    .update(updates)
-    .or(`query_number.eq.${queryId},id.eq.${queryId}`)
-    .select()
-    .single();
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(queryIdentifier);
 
-  if (error) throw error;
+  let builder = supabase.from('queries').update(updates);
+  if (isUUID) {
+    builder = builder.eq('id', queryIdentifier);
+  } else {
+    builder = builder.eq('query_number', queryIdentifier);
+  }
+
+  const { data, error } = await builder.select().maybeSingle();
+  if (error) {
+    console.error('Error updating query in DB:', error);
+    throw error;
+  }
   return data;
+}
+
+// Helper: resolve queryIdentifier to valid UUID
+async function resolveQueryUuid(queryIdentifier) {
+  if (!queryIdentifier) return null;
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(queryIdentifier);
+  if (isUUID) return queryIdentifier;
+
+  const { data } = await supabase
+    .from('queries')
+    .select('id')
+    .eq('query_number', queryIdentifier)
+    .maybeSingle();
+
+  return data?.id || null;
 }
 
 export async function insertResponseToDB({ queryDbId, authorId, authorName, authorRole, responseMessage, isOfficial = true }) {
   if (!isSupabaseConfigured) return null;
 
+  const targetUuid = await resolveQueryUuid(queryDbId);
+  if (!targetUuid) {
+    throw new Error(`Could not resolve query identifier "${queryDbId}" to a database UUID.`);
+  }
+
   const { data, error } = await supabase
     .from('query_responses')
     .insert([{
-      query_id: queryDbId,
+      query_id: targetUuid,
       author_id: authorId,
       author_name: authorName,
       author_role: authorRole,
@@ -265,26 +366,29 @@ export async function insertResponseToDB({ queryDbId, authorId, authorName, auth
 export async function insertStatusHistoryToDB({ queryDbId, oldStatus, newStatus, changedBy, changedByName, remarks }) {
   if (!isSupabaseConfigured) return null;
 
+  const targetUuid = await resolveQueryUuid(queryDbId);
+  if (!targetUuid) return null;
+
   const { data, error } = await supabase
     .from('query_status_history')
     .insert([{
-      query_id: queryDbId,
+      query_id: targetUuid,
       old_status: oldStatus,
       new_status: newStatus,
-      changed_by: changedBy,
+      changed_by: changedBy || null,
       changed_by_name: changedByName,
       remarks,
     }])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) console.error('insertStatusHistoryToDB error:', error);
   return data;
 }
 
 /**
  * ==============================================================================
- * FACULTY DIRECTORY & CSP WORKLOADS
+ * FACULTY DIRECTORY & WORKLOADS
  * ==============================================================================
  */
 
@@ -297,7 +401,7 @@ export async function fetchFacultyFromDB() {
     .order('name');
 
   if (error) {
-    console.error('Error fetching faculty:', error);
+    console.warn('Error fetching faculty from DB:', error.message);
     return [];
   }
 
@@ -318,13 +422,16 @@ export async function fetchFacultyFromDB() {
 export async function updateFacultyInDB(facultyId, updates) {
   if (!isSupabaseConfigured) return null;
 
-  const { data, error } = await supabase
-    .from('faculty')
-    .update(updates)
-    .eq('id', facultyId)
-    .select()
-    .single();
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(facultyId);
 
+  let builder = supabase.from('faculty').update(updates);
+  if (isUUID) {
+    builder = builder.eq('id', facultyId);
+  } else {
+    builder = builder.eq('name', facultyId);
+  }
+
+  const { data, error } = await builder.select().maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -351,6 +458,63 @@ export async function insertFacultyToDB(facultyData) {
   return data;
 }
 
+// Admin-only creation of Faculty user accounts
+export async function createFacultyAccountByAdmin({ name, email, password, department, roleTitle, subjects, maxLoad }) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  // 1. First attempt to invoke secure Supabase Edge Function 'create-user'
+  try {
+    const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-user', {
+      body: {
+        email,
+        password: password || 'FacultyPass@123',
+        full_name: name,
+        department,
+        role: 'faculty',
+        subjects: subjects || [],
+        max_load: maxLoad || 5,
+      },
+    });
+
+    if (!edgeError && edgeData?.user) {
+      return edgeData;
+    }
+  } catch (edgeEx) {
+    console.warn('Edge function unavailable, attempting direct database RPC:', edgeEx);
+  }
+
+  // 2. Fallback to database RPC function 'create_faculty_account'
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('create_faculty_account', {
+      p_name: name,
+      p_email: email,
+      p_department: department,
+      p_role_title: roleTitle || 'Faculty Advisor',
+      p_specialization: subjects || [],
+      p_maximum_workload: maxLoad || 5,
+    });
+
+    if (!rpcError && rpcData) {
+      return rpcData;
+    }
+  } catch (rpcEx) {
+    console.warn('RPC create_faculty_account warning:', rpcEx);
+  }
+
+  // 3. Fallback: Direct insert into public.faculty table
+  return await insertFacultyToDB({
+    name,
+    email,
+    role: roleTitle,
+    department,
+    subjects,
+    maxLoad,
+    available: true,
+  });
+}
+
 /**
  * ==============================================================================
  * KNOWLEDGE RULES MANAGEMENT
@@ -366,7 +530,7 @@ export async function fetchKnowledgeRulesFromDB() {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Error fetching knowledge rules:', error);
+    console.warn('Error fetching knowledge rules:', error.message);
     return [];
   }
 
@@ -376,13 +540,16 @@ export async function fetchKnowledgeRulesFromDB() {
 export async function updateKnowledgeRuleInDB(ruleId, updates) {
   if (!isSupabaseConfigured) return null;
 
-  const { data, error } = await supabase
-    .from('knowledge_rules')
-    .update(updates)
-    .eq('id', ruleId)
-    .select()
-    .single();
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ruleId);
 
+  let builder = supabase.from('knowledge_rules').update(updates);
+  if (isUUID) {
+    builder = builder.eq('id', ruleId);
+  } else {
+    builder = builder.eq('rule_code', ruleId);
+  }
+
+  const { data, error } = await builder.select().maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -411,11 +578,16 @@ export async function insertKnowledgeRuleToDB(ruleData) {
 export async function deleteKnowledgeRuleFromDB(ruleId) {
   if (!isSupabaseConfigured) return null;
 
-  const { error } = await supabase
-    .from('knowledge_rules')
-    .delete()
-    .eq('id', ruleId);
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ruleId);
 
+  let builder = supabase.from('knowledge_rules').delete();
+  if (isUUID) {
+    builder = builder.eq('id', ruleId);
+  } else {
+    builder = builder.eq('rule_code', ruleId);
+  }
+
+  const { error } = await builder;
   if (error) throw error;
   return true;
 }
@@ -437,7 +609,7 @@ export async function fetchNotificationsFromDB(userId) {
     .limit(30);
 
   if (error) {
-    console.error('Error fetching notifications:', error);
+    console.warn('Error fetching notifications:', error.message);
     return [];
   }
 
@@ -452,25 +624,32 @@ export async function markNotificationAsReadInDB(notificationId) {
     .update({ is_read: true })
     .eq('id', notificationId);
 
-  if (error) console.error('Error marking notification read:', error);
+  if (error) console.warn('Error marking notification read:', error.message);
 }
 
 export async function createNotificationInDB({ userId, queryId, message }) {
   if (!isSupabaseConfigured || !userId) return null;
 
-  const { data, error } = await supabase
-    .from('notifications')
-    .insert([{
-      user_id: userId,
-      query_id: queryId,
-      message,
-      is_read: false,
-    }])
-    .select()
-    .single();
+  try {
+    const targetUuid = queryId ? await resolveQueryUuid(queryId) : null;
 
-  if (error) console.error('Error creating notification:', error);
-  return data;
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([{
+        user_id: userId,
+        query_id: targetUuid,
+        message,
+        is_read: false,
+      }])
+      .select()
+      .maybeSingle();
+
+    if (error) console.warn('Error creating notification:', error.message);
+    return data;
+  } catch (e) {
+    console.warn('createNotificationInDB exception:', e);
+    return null;
+  }
 }
 
 /**
@@ -496,9 +675,8 @@ export async function uploadQueryAttachment({ file, queryDbId, userId }) {
     throw new Error('Only PDF, JPG, JPEG, and PNG files are allowed.');
   }
 
-  const fileExt = file.name.split('.').pop();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const filePath = `${userId}/${queryDbId || 'temp'}/${Date.now()}_${safeName}`;
+  const filePath = `${userId}/${Date.now()}_${safeName}`;
 
   // Upload to Supabase Storage
   const { data: uploadData, error: uploadError } = await supabase.storage
@@ -511,11 +689,12 @@ export async function uploadQueryAttachment({ file, queryDbId, userId }) {
   if (uploadError) throw uploadError;
 
   // Insert metadata into public.query_attachments table
-  if (queryDbId) {
+  const targetUuid = queryDbId ? await resolveQueryUuid(queryDbId) : null;
+  if (targetUuid) {
     const { data: recordData, error: recordError } = await supabase
       .from('query_attachments')
       .insert([{
-        query_id: queryDbId,
+        query_id: targetUuid,
         file_name: file.name,
         file_path: uploadData.path,
         file_size: file.size,
@@ -540,15 +719,19 @@ export async function uploadQueryAttachment({ file, queryDbId, userId }) {
 export async function getAttachmentDownloadUrl(filePath) {
   if (!isSupabaseConfigured || !filePath) return null;
 
-  // Create signed URL valid for 60 minutes
+  // Try signed URL first (valid for 60 minutes)
   const { data, error } = await supabase.storage
     .from('query-attachments')
     .createSignedUrl(filePath, 3600);
 
-  if (error) {
-    console.error('Error generating signed URL:', error);
-    return null;
+  if (!error && data?.signedUrl) {
+    return data.signedUrl;
   }
-  return data.signedUrl;
-}
 
+  // Fallback to public URL
+  const { data: pubData } = supabase.storage
+    .from('query-attachments')
+    .getPublicUrl(filePath);
+
+  return pubData?.publicUrl || null;
+}

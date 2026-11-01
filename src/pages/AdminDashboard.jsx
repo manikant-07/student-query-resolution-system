@@ -57,6 +57,7 @@ export function AdminDashboard() {
   const [newFacultyData, setNewFacultyData] = useState({
     name: '',
     email: '',
+    password: '',
     role: 'Assistant Professor',
     department: 'Artificial Intelligence & Data Science',
     subjects: '',
@@ -115,6 +116,7 @@ export function AdminDashboard() {
 
     await addFacultyMember({
       ...newFacultyData,
+      password: newFacultyData.password || 'FacultyPass@123',
       subjects: newFacultyData.subjects ? newFacultyData.subjects.split(',').map(s => s.trim()) : [],
       available: true,
     });
@@ -123,6 +125,7 @@ export function AdminDashboard() {
     setNewFacultyData({
       name: '',
       email: '',
+      password: '',
       role: 'Assistant Professor',
       department: 'Artificial Intelligence & Data Science',
       subjects: '',
@@ -853,6 +856,20 @@ export function AdminDashboard() {
               onChange={(e) => setNewFacultyData({ ...newFacultyData, email: e.target.value })}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Temporary / Initial Password (Optional)</label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="Defaults to FacultyPass@123"
+              value={newFacultyData.password}
+              onChange={(e) => setNewFacultyData({ ...newFacultyData, password: e.target.value })}
+            />
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              Faculty member will use this password to sign in to their resolution desk.
+            </span>
           </div>
 
           <div className="grid-2">
