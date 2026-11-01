@@ -11,14 +11,18 @@ import {
   Moon,
   LogIn,
   LogOut,
-  User
+  User,
+  HelpCircle,
+  Cpu,
+  BookOpen
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
 import { UserAvatar } from './UserAvatar';
 
 export function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { 
     role, 
     setRole, 
@@ -41,13 +45,14 @@ export function Navbar() {
   return (
     <header
       style={{
-        background: 'var(--bg-glass)',
-        backdropFilter: 'blur(12px)',
+        background: 'var(--bg-nav)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        padding: '0.75rem 1.5rem',
+        padding: '0.85rem 2rem',
         transition: 'background 200ms, border-color 200ms'
       }}
     >
@@ -58,11 +63,11 @@ export function Navbar() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '1rem'
+          gap: '1.25rem'
         }}
       >
-        {/* Brand & Tagline */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        {/* Brand Logo & Name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="btn-ghost"
@@ -70,7 +75,7 @@ export function Navbar() {
               display: 'none',
               padding: '6px',
               border: '1px solid var(--border)',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer'
             }}
             id="mobile-nav-toggle"
@@ -82,60 +87,150 @@ export function Navbar() {
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
             <div
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: 'var(--primary)',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: 'var(--accent-gradient)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#fff',
-                boxShadow: '0 2px 8px rgba(40, 120, 229, 0.25)',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
+                color: '#060D09',
+                boxShadow: '0 4px 16px var(--primary-glow)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                position: 'relative'
               }}
             >
-              <Sparkles size={20} color="#FFFFFF" />
+              <Sparkles size={22} color={theme === 'dark' ? '#060D09' : '#ffffff'} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}>
-                  Student Query Resolution System
+                <span
+                  style={{
+                    fontSize: '1.35rem',
+                    fontWeight: 800,
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-heading)',
+                    letterSpacing: '-0.03em'
+                  }}
+                >
+                  Solve<span style={{ color: 'var(--primary)' }}>Hub</span>
                 </span>
                 <span
                   style={{
-                    fontSize: '0.68rem',
+                    fontSize: '0.65rem',
                     fontWeight: 700,
                     background: 'var(--primary-light)',
                     color: 'var(--primary)',
                     border: '1px solid var(--border)',
                     padding: '2px 8px',
-                    borderRadius: '999px',
+                    borderRadius: 'var(--radius-full)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em'
                   }}
                 >
-                  Academic ERP
+                  Query Resolution
                 </span>
               </div>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                University Academic Resolution & AI Decision System
-              </p>
             </div>
           </Link>
         </div>
 
+        {/* Desktop Anchor Navigation Links */}
+        <nav
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.25rem',
+          }}
+          className="desktop-nav-links"
+        >
+          <Link
+            to="/"
+            style={{
+              fontSize: '0.885rem',
+              fontWeight: 600,
+              color: location.pathname === '/' ? 'var(--primary)' : 'var(--text-secondary)',
+              transition: 'color var(--transition-fast)'
+            }}
+          >
+            Home
+          </Link>
+          <a
+            href="#features"
+            style={{
+              fontSize: '0.885rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              transition: 'color var(--transition-fast)'
+            }}
+          >
+            Features
+          </a>
+          <a
+            href="#how-it-works"
+            style={{
+              fontSize: '0.885rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              transition: 'color var(--transition-fast)'
+            }}
+          >
+            How it Works
+          </a>
+          <Link
+            to="/faq"
+            style={{
+              fontSize: '0.885rem',
+              fontWeight: 600,
+              color: location.pathname === '/faq' ? 'var(--primary)' : 'var(--text-secondary)',
+              transition: 'color var(--transition-fast)'
+            }}
+          >
+            FAQ
+          </Link>
+          <Link
+            to="/ai-lab"
+            style={{
+              fontSize: '0.885rem',
+              fontWeight: 600,
+              color: location.pathname === '/ai-lab' ? 'var(--primary)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem'
+            }}
+          >
+            <Cpu size={15} />
+            <span>AI Lab</span>
+          </Link>
+          <Link
+            to="/viva"
+            style={{
+              fontSize: '0.885rem',
+              fontWeight: 600,
+              color: location.pathname === '/viva' ? 'var(--primary)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem'
+            }}
+          >
+            <BookOpen size={15} />
+            <span>Viva</span>
+          </Link>
+        </nav>
+
         {/* Action Controls & Role Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {/* Role Switcher Pill */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          {/* Role Switcher Pill Bar */}
           <div
             className="role-toggle-bar"
             style={{
-              background: 'var(--bg-subtle)',
+              background: 'var(--bg-card)',
               padding: '3px',
-              borderRadius: '12px',
+              borderRadius: 'var(--radius-full)',
               display: 'flex',
               alignItems: 'center',
-              border: '1px solid var(--border)'
+              border: '1px solid var(--border)',
+              backdropFilter: 'blur(12px)'
             }}
           >
             <button
@@ -147,19 +242,19 @@ export function Navbar() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '9px',
+                padding: '0.35rem 0.85rem',
+                borderRadius: 'var(--radius-full)',
                 border: 'none',
                 fontSize: '0.8rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 150ms',
-                background: role === 'student' ? 'var(--bg-card)' : 'transparent',
-                color: role === 'student' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: role === 'student' ? 'var(--shadow-xs)' : 'none'
+                transition: 'all 160ms',
+                background: role === 'student' ? 'var(--primary)' : 'transparent',
+                color: role === 'student' ? (theme === 'dark' ? '#060D09' : '#ffffff') : 'var(--text-muted)',
+                boxShadow: role === 'student' ? '0 2px 8px var(--primary-glow)' : 'none'
               }}
             >
-              <GraduationCap size={15} />
+              <GraduationCap size={14} />
               <span>Student</span>
             </button>
             <button
@@ -171,24 +266,24 @@ export function Navbar() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '9px',
+                padding: '0.35rem 0.85rem',
+                borderRadius: 'var(--radius-full)',
                 border: 'none',
                 fontSize: '0.8rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 150ms',
-                background: role === 'faculty' ? 'var(--bg-card)' : 'transparent',
-                color: role === 'faculty' ? 'var(--accent-purple)' : 'var(--text-muted)',
-                boxShadow: role === 'faculty' ? 'var(--shadow-xs)' : 'none'
+                transition: 'all 160ms',
+                background: role === 'faculty' ? 'var(--primary)' : 'transparent',
+                color: role === 'faculty' ? (theme === 'dark' ? '#060D09' : '#ffffff') : 'var(--text-muted)',
+                boxShadow: role === 'faculty' ? '0 2px 8px var(--primary-glow)' : 'none'
               }}
             >
-              <UserCheck size={15} />
-              <span>Faculty</span>
+              <UserCheck size={14} />
+              <span>Mentor</span>
               {pendingCount > 0 && (
                 <span
                   style={{
-                    background: '#ef4444',
+                    background: 'var(--danger)',
                     color: '#fff',
                     borderRadius: '50%',
                     padding: '1px 5px',
@@ -208,19 +303,19 @@ export function Navbar() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '9px',
+                padding: '0.35rem 0.85rem',
+                borderRadius: 'var(--radius-full)',
                 border: 'none',
                 fontSize: '0.8rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 150ms',
-                background: role === 'admin' ? 'var(--bg-card)' : 'transparent',
-                color: role === 'admin' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: role === 'admin' ? 'var(--shadow-xs)' : 'none'
+                transition: 'all 160ms',
+                background: role === 'admin' ? 'var(--primary)' : 'transparent',
+                color: role === 'admin' ? (theme === 'dark' ? '#060D09' : '#ffffff') : 'var(--text-muted)',
+                boxShadow: role === 'admin' ? '0 2px 8px var(--primary-glow)' : 'none'
               }}
             >
-              <ShieldCheck size={15} />
+              <ShieldCheck size={14} />
               <span>Admin</span>
             </button>
           </div>
@@ -236,16 +331,17 @@ export function Navbar() {
             aria-label="Toggle Theme"
           >
             {theme === 'dark' ? (
-              <Sun size={15} color="#f59e0b" style={{ filter: 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.4))' }} />
+              <Sun size={17} color="#B6F36B" />
             ) : (
-              <Moon size={15} color="var(--primary)" />
+              <Moon size={17} color="#8B5CF6" />
             )}
           </button>
 
           {/* User Status: Logged in Persona or Sign In CTA */}
           {currentUser ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div
+              <Link
+                to="/profile"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -253,7 +349,9 @@ export function Navbar() {
                   padding: '0.3rem 0.75rem',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px'
+                  borderRadius: 'var(--radius-full)',
+                  backdropFilter: 'blur(10px)',
+                  textDecoration: 'none'
                 }}
                 className="persona-chip"
               >
@@ -267,26 +365,26 @@ export function Navbar() {
                     {userProfile?.full_name || currentUser.displayName || currentUser?.user_metadata?.full_name || currentUser.email}
                   </div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                    {role.toUpperCase()} • {userProfile?.enrollment_number || 'Google Verified'}
+                    {role.toUpperCase()}
                   </div>
                 </div>
-              </div>
+              </Link>
 
               {role === 'student' && userProfile && !userProfile.is_profile_complete && (
                 <button
                   onClick={openOnboardingModal}
-                  className="btn btn-warning btn-sm"
-                  style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}
-                  title="Complete required college profile details"
+                  className="btn btn-warning btn-sm btn-pill"
+                  style={{ fontSize: '0.72rem', padding: '0.3rem 0.65rem' }}
+                  title="Complete profile"
                 >
-                  Complete Profile
+                  Verify
                 </button>
               )}
 
               <button
                 onClick={logout}
-                title="Sign out of portal"
-                className="btn btn-secondary btn-sm"
+                title="Sign out of SolveHub"
+                className="btn btn-secondary btn-sm btn-pill"
                 style={{ color: 'var(--danger)', borderColor: 'var(--border)' }}
               >
                 <LogOut size={14} />
@@ -294,22 +392,21 @@ export function Navbar() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
                 onClick={() => openAuthModal('login')}
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm btn-pill"
                 style={{ gap: '0.35rem' }}
               >
                 <LogIn size={14} />
-                <span>Sign In</span>
+                <span>Login</span>
               </button>
               <button
                 onClick={() => openAuthModal('register')}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm btn-pill"
                 style={{ gap: '0.35rem' }}
               >
-                <User size={14} />
-                <span>Register</span>
+                <span>Get Started</span>
               </button>
             </div>
           )}
@@ -317,7 +414,10 @@ export function Navbar() {
       </div>
 
       <style>{`
-        @media (max-width: 900px) {
+        @media (max-width: 980px) {
+          .desktop-nav-links {
+            display: none !important;
+          }
           #mobile-nav-toggle {
             display: flex !important;
           }

@@ -12,21 +12,39 @@ import {
   Clock, 
   User, 
   Building, 
-  Send,
-  AlertCircle,
-  Tag,
-  Paperclip,
-  Download,
-  History,
-  CheckCircle2
+  Send, 
+  AlertCircle, 
+  Tag, 
+  Paperclip, 
+  Download, 
+  History, 
+  CheckCircle2,
+  Star,
+  RefreshCw,
+  Check
 } from 'lucide-react';
 
 export function QueryDetailModal({ query, isOpen, onClose }) {
-  const { voteQueryFeedback, replyToQuery, role, currentUser } = useApp();
+  const { voteQueryFeedback, replyToQuery, updateQueryStatus, role, currentUser, showToast } = useApp();
   const [replyText, setReplyText] = useState('');
   const [downloadingFile, setDownloadingFile] = useState(null);
 
+  // Star Rating & Feedback State
+  const [userRating, setUserRating] = useState(5);
+  const [feedbackRemarks, setFeedbackRemarks] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
   if (!query) return null;
+
+  // Determine current step in 4-step stepper (Submitted -> Assigned -> In Progress -> Resolved)
+  const getStepperActiveIndex = (status, assignedTo) => {
+    if (status === 'Resolved') return 4;
+    if (status === 'Answered') return 3;
+    if (assignedTo && assignedTo !== 'Unassigned') return 2;
+    return 1;
+  };
+
+  const currentStep = getStepperActiveIndex(query.status, query.assignedTo);
 
   const handleSendReply = async (e) => {
     e.preventDefault();
@@ -34,6 +52,23 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
 
     await replyToQuery(query.id, replyText);
     setReplyText('');
+    showToast('Reply message delivered to resolution thread.', 'success');
+  };
+
+  const handleMarkResolved = async () => {
+    await updateQueryStatus(query.id, 'Resolved', 'Student confirmed resolution');
+    showToast('Query marked as fully resolved!', 'success');
+  };
+
+  const handleReopenQuery = async () => {
+    await updateQueryStatus(query.id, 'Pending', 'Query reopened by student for further clarification');
+    showToast('Query reopened for mentor review.', 'info');
+  };
+
+  const handleSubmitRating = (e) => {
+    e.preventDefault();
+    setFeedbackSubmitted(true);
+    showToast(`Thank you! ${userRating}-star rating submitted.`, 'success');
   };
 
   const handleDownloadAttachment = async (attachment) => {
@@ -43,7 +78,7 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
       if (url) {
         window.open(url, '_blank');
       } else {
-        alert('Could not generate download link. Please check permissions.');
+        alert('Download link could not be generated. Check permissions.');
       }
     } catch (err) {
       console.error(err);
@@ -53,143 +88,152 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
     }
   };
 
-  const feedback = query.feedback || { helpful: 0, notHelpful: 0, userVoted: null };
-
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Query Details: ${query.id}`}
-      subtitle={`Submitted on ${new Date(query.createdAt).toLocaleDateString()} at ${new Date(query.createdAt).toLocaleTimeString()}`}
+      title={`Ticket #${query.id}`}
+      subtitle={`Submitted on ${new Date(query.createdAt).toLocaleDateString()} at ${new Date(query.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
       maxWidth="780px"
     >
       <div>
-        {/* Status & Metadata Bar */}
+        {/* =====================================================================
+            STATUS STEPPER: Submitted -> Assigned -> In Progress -> Resolved
+            ===================================================================== */}
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-            padding: '0.85rem 1rem',
             background: 'var(--bg-subtle)',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem 1.5rem',
             border: '1px solid var(--border)',
-            marginBottom: '1.25rem',
+            marginBottom: '1.5rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <StatusBadge status={query.status} />
-            <PriorityBadge priority={query.priority} />
-            <span
-              style={{
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                background: 'var(--primary-light)',
-                color: 'var(--primary)',
-                padding: '2px 8px',
-                borderRadius: '6px',
-              }}
-            >
-              {query.category}
-            </span>
+          <div className="status-stepper">
+            <div className="stepper-line" />
+
+            {[
+              { idx: 1, label: 'Submitted' },
+              { idx: 2, label: 'Assigned' },
+              { idx: 3, label: 'In Progress' },
+              { idx: 4, label: 'Resolved' }
+            ].map(step => (
+              <div
+                key={step.idx}
+                className={`status-step ${currentStep >= step.idx ? 'completed' : ''} ${currentStep === step.idx ? 'active' : ''}`}
+              >
+                <div className="step-circle">
+                  {currentStep > step.idx ? <Check size={16} /> : step.idx}
+                </div>
+                <span className="step-label">{step.label}</span>
+              </div>
+            ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <User size={14} />
-              {query.studentName} ({query.studentRoll})
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Building size={14} />
-              {query.assignedDept || 'Academic Cell'}
-            </span>
+          {/* Action Resolution Bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <StatusBadge status={query.status} />
+              <PriorityBadge priority={query.priority} />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {query.status !== 'Resolved' ? (
+                <button
+                  type="button"
+                  onClick={handleMarkResolved}
+                  className="btn btn-primary btn-sm btn-pill"
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Mark as Resolved</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleReopenQuery}
+                  className="btn btn-secondary btn-sm btn-pill"
+                  style={{ color: 'var(--warning)', borderColor: 'var(--border)' }}
+                >
+                  <RefreshCw size={14} />
+                  <span>Reopen Query</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Subject & Description */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <h4 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+        {/* Query Subject & Description */}
+        <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.25rem', borderRadius: 'var(--radius-lg)' }}>
+          <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: '0.65rem', fontFamily: 'var(--font-heading)' }}>
             {query.subject}
-          </h4>
-          <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          </h3>
+          <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
             {query.description}
           </p>
 
-          {/* Tags */}
-          {query.tags && query.tags.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-              <Tag size={14} color="var(--text-muted)" />
-              {query.tags.map(t => (
-                <span
-                  key={t}
-                  style={{
-                    fontSize: '0.75rem',
-                    background: 'var(--bg-subtle)',
-                    color: 'var(--text-muted)',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  #{t}
-                </span>
-              ))}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div>
+              Student: <strong>{query.studentName || 'Student'}</strong> ({query.studentRoll || 'Verified'})
             </div>
-          )}
+            <div>
+              Assigned Mentor: <strong style={{ color: 'var(--primary)' }}>{query.assignedTo || 'Pending'}</strong>
+            </div>
+          </div>
         </div>
 
-        {/* Uploaded Documents & Attachments */}
-        {query.attachments && query.attachments.length > 0 && (
+        {/* AI Rule Recommendation Banner (if triggered) */}
+        {query.suggestedAnswer && (
           <div
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-              padding: '1rem',
+              background: 'var(--primary-light)',
+              border: '1px solid var(--border-accent)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.25rem',
               marginBottom: '1.25rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.65rem' }}>
-              <Paperclip size={16} color="var(--primary)" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Attached Verification Documents ({query.attachments.length})
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--primary)', fontWeight: 800, fontSize: '0.825rem', marginBottom: '0.35rem', textTransform: 'uppercase' }}>
+              <Sparkles size={16} />
+              <span>AI Recommendation ({query.matchedRule || 'Knowledge Rule'})</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.5, fontWeight: 600 }}>
+              {query.suggestedAnswer}
+            </p>
+          </div>
+        )}
+
+        {/* File Attachments */}
+        {query.attachments && query.attachments.length > 0 && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <h5 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: 700 }}>
+              Attached Documents ({query.attachments.length})
+            </h5>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
               {query.attachments.map(att => (
                 <div
                   key={att.id}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem 0.75rem',
+                    gap: '0.65rem',
+                    padding: '0.55rem 0.95rem',
                     background: 'var(--bg-subtle)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border)'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {att.fileName}
-                    </span>
-                    {att.fileSize && (
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        ({(att.fileSize / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    )}
-                  </div>
+                  <Paperclip size={16} color="var(--primary)" />
+                  <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {att.fileName}
+                  </span>
                   <button
-                    type="button"
                     onClick={() => handleDownloadAttachment(att)}
                     disabled={downloadingFile === att.id}
-                    className="btn btn-secondary btn-sm"
-                    style={{ gap: '0.35rem' }}
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '2px 6px' }}
+                    title="Download document"
                   >
-                    <Download size={13} />
-                    <span>{downloadingFile === att.id ? 'Accessing...' : 'View / Download'}</span>
+                    <Download size={14} />
                   </button>
                 </div>
               ))}
@@ -197,142 +241,13 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
           </div>
         )}
 
-        {/* Automated AI Suggestion Card */}
-        {query.suggestedAnswer && (
-          <div
-            style={{
-              background: 'var(--hero-gradient)',
-              border: '1px solid var(--primary-glow)',
-              borderRadius: '12px',
-              padding: '1.15rem',
-              marginBottom: '1.5rem',
-              boxShadow: 'var(--shadow-xs)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.9rem' }}>
-                <Sparkles size={18} />
-                <span>AI Automated Knowledge Suggestion</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    background: 'var(--primary-light)',
-                    color: 'var(--primary)',
-                    padding: '2px 8px',
-                    borderRadius: '999px',
-                  }}
-                >
-                  Certainty: {Math.round((query.certaintyScore || 0.8) * 100)}%
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.72rem',
-                    color: 'var(--text-muted)',
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    padding: '2px 6px',
-                    borderRadius: '6px',
-                  }}
-                >
-                  Rule: {query.matchedRule || 'KNOWLEDGE_BASE'}
-                </span>
-              </div>
-            </div>
-
-            <p style={{ fontSize: '0.885rem', color: 'var(--text-primary)', lineHeight: 1.5, marginBottom: '0.65rem' }}>
-              {query.suggestedAnswer}
-            </p>
-
-            {query.explanation && (
-              <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', borderTop: '1px dashed var(--border)', paddingTop: '0.5rem', fontStyle: 'italic' }}>
-                <strong>Explanation Facility:</strong> {query.explanation}
-              </p>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.85rem', paddingTop: '0.65rem', borderTop: '1px solid var(--border)' }}>
-              <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
-                Was this automated recommendation helpful?
-              </span>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => voteQueryFeedback(query.id, true)}
-                  className="btn btn-secondary btn-sm"
-                  style={{
-                    background: feedback.userVoted === 'helpful' ? 'var(--success-light)' : 'var(--bg-card)',
-                    color: feedback.userVoted === 'helpful' ? 'var(--success)' : 'var(--text-secondary)',
-                    borderColor: feedback.userVoted === 'helpful' ? 'var(--success)' : 'var(--border)',
-                  }}
-                >
-                  <ThumbsUp size={14} />
-                  <span>Helpful ({feedback.helpful})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => voteQueryFeedback(query.id, false)}
-                  className="btn btn-secondary btn-sm"
-                  style={{
-                    background: feedback.userVoted === 'notHelpful' ? 'var(--danger-light)' : 'var(--bg-card)',
-                    color: feedback.userVoted === 'notHelpful' ? 'var(--danger)' : 'var(--text-secondary)',
-                    borderColor: feedback.userVoted === 'notHelpful' ? 'var(--danger)' : 'var(--border)',
-                  }}
-                >
-                  <ThumbsDown size={14} />
-                  <span>Not Helpful ({feedback.notHelpful})</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Status Lifecycle Audit History */}
-        {query.statusHistory && query.statusHistory.length > 0 && (
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.65rem' }}>
-              <History size={16} color="var(--primary)" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Query Lifecycle & Status Audit Trail
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {query.statusHistory.map(h => (
-                <div
-                  key={h.id}
-                  style={{
-                    padding: '0.5rem 0.75rem',
-                    background: 'var(--bg-subtle)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>Status transition: </span>
-                    <strong>{h.oldStatus || 'Created'}</strong> ➔ <strong style={{ color: 'var(--primary)' }}>{h.newStatus}</strong>
-                    {h.remarks && <span style={{ color: 'var(--text-secondary)', marginLeft: '6px' }}>({h.remarks})</span>}
-                  </div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    by {h.changedByName || 'System'} • {new Date(h.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Conversation & Official Faculty Resolution Thread */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        {/* Conversation Thread UI */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
             <MessageSquare size={17} color="var(--primary)" />
-            <h5 style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-              Official Responses & Resolution Thread ({query.replies ? query.replies.length : 0})
-            </h5>
+            <h4 style={{ fontSize: '1.05rem', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+              Conversation Thread ({query.replies ? query.replies.length : 0})
+            </h4>
           </div>
 
           {(!query.replies || query.replies.length === 0) ? (
@@ -340,32 +255,32 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
               style={{
                 background: 'var(--bg-subtle)',
                 border: '1px dashed var(--border)',
-                borderRadius: '10px',
-                padding: '1.5rem',
+                borderRadius: 'var(--radius-lg)',
+                padding: '2rem',
                 textAlign: 'center',
-                color: 'var(--text-muted)',
-                fontSize: '0.85rem',
+                color: 'var(--text-muted)'
               }}
             >
-              <Clock size={24} style={{ margin: '0 auto 0.5rem', opacity: 0.6 }} />
-              <p>No faculty replies posted yet. Your query is currently under review by {query.assignedTo}.</p>
+              <Clock size={28} style={{ margin: '0 auto 0.5rem', opacity: 0.6 }} />
+              <p style={{ fontSize: '0.9rem' }}>
+                No messages yet. The assigned mentor ({query.assignedTo}) has received the inquiry.
+              </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {query.replies.map((reply) => (
                 <div
                   key={reply.id}
+                  className="glass-card"
                   style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '12px',
-                    padding: '1rem',
+                    padding: '1.15rem 1.25rem',
+                    borderRadius: 'var(--radius-lg)'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <UserAvatar name={reply.author} size="xs" />
-                      <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.885rem', color: 'var(--text-primary)' }}>
                         {reply.author}
                       </span>
                       <span
@@ -373,19 +288,19 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
                           fontSize: '0.7rem',
                           background: 'var(--primary-light)',
                           color: 'var(--primary)',
-                          padding: '1px 7px',
-                          borderRadius: '999px',
-                          fontWeight: 600,
+                          padding: '1px 8px',
+                          borderRadius: 'var(--radius-full)',
+                          fontWeight: 700
                         }}
                       >
-                        {reply.role || 'Official Resolution'}
+                        {reply.role || 'Official'}
                       </span>
                     </div>
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      {new Date(reply.timestamp).toLocaleDateString()} {new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(reply.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
                     {reply.message}
                   </p>
                 </div>
@@ -394,15 +309,12 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
           )}
         </div>
 
-        {/* Reply Box */}
-        <form onSubmit={handleSendReply} style={{ marginTop: '1rem' }}>
+        {/* Live Reply Box */}
+        <form onSubmit={handleSendReply} style={{ marginBottom: '1.75rem' }}>
           <div className="form-group" style={{ marginBottom: '0.65rem' }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>
-              {role === 'student' ? 'Post Follow-up Question or Acknowledgment' : 'Add Official Response to Query'}
-            </label>
             <textarea
               className="form-textarea"
-              placeholder={role === 'student' ? "Type follow-up inquiry or confirm resolution..." : "Write institutional instructions, policy updates or meeting schedule..."}
+              placeholder={role === 'student' ? "Send reply or question to your mentor..." : "Add official resolution guidance..."}
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               rows={3}
@@ -411,15 +323,88 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary btn-pill btn-sm"
               disabled={!replyText.trim()}
-              style={{ gap: '0.4rem' }}
             >
-              <Send size={15} />
+              <Send size={14} />
               <span>Send Message</span>
             </button>
           </div>
         </form>
+
+        {/* =====================================================================
+            STAR RATING & FEEDBACK BOX
+            ===================================================================== */}
+        {query.status === 'Resolved' && (
+          <div
+            className="glass-card"
+            style={{
+              padding: '1.5rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
+              <Star size={18} color="#F59E0B" fill="#F59E0B" />
+              <h4 style={{ fontSize: '1rem', fontFamily: 'var(--font-heading)' }}>
+                Rate Your Resolution Experience
+              </h4>
+            </div>
+
+            {feedbackSubmitted ? (
+              <div style={{ color: 'var(--success)', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <CheckCircle2 size={16} />
+                <span>Thank you! Your feedback has been logged for faculty quality metrics.</span>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitRating}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  How satisfied are you with the explanation and response time provided by <strong>{query.assignedTo}</strong>?
+                </p>
+
+                {/* 5-Star Selector */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setUserRating(star)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        color: userRating >= star ? '#F59E0B' : 'var(--text-muted)',
+                        transform: userRating >= star ? 'scale(1.15)' : 'scale(1)',
+                        transition: 'all 120ms'
+                      }}
+                    >
+                      <Star size={24} fill={userRating >= star ? '#F59E0B' : 'transparent'} />
+                    </button>
+                  ))}
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F59E0B', marginLeft: '6px' }}>
+                    {userRating} / 5 Stars
+                  </span>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Optional feedback: Was the resolution clear and helpful?"
+                    value={feedbackRemarks}
+                    onChange={(e) => setFeedbackRemarks(e.target.value)}
+                  />
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-sm btn-pill">
+                  <span>Submit Star Rating</span>
+                </button>
+              </form>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   );

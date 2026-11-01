@@ -1,65 +1,81 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
-  Home, 
-  GraduationCap, 
-  Users, 
-  ShieldCheck,
-  Cpu, 
-  BookOpen, 
-  MessageSquareCheck,
-  Sparkles,
+  LayoutDashboard, 
+  PlusCircle,
+  FileQuestion,
+  Bell,
+  BookOpen,
+  User,
+  LogOut,
+  Cpu,
   Layers,
+  Sparkles,
   HelpCircle,
-  Clock
+  MessageSquareCheck
 } from 'lucide-react';
 
 export function Sidebar() {
-  const { queries, role, mobileMenuOpen, setMobileMenuOpen } = useApp();
+  const navigate = useNavigate();
+  const { queries, role, mobileMenuOpen, setMobileMenuOpen, logout, currentUser } = useApp();
 
   const pendingCount = queries.filter(q => q.status === 'Pending').length;
   const answeredCount = queries.filter(q => q.status === 'Answered').length;
   const resolvedCount = queries.filter(q => q.status === 'Resolved').length;
 
+  const dashboardRoute = role === 'admin' ? '/admin' : role === 'faculty' ? '/faculty' : '/student';
+
   const navItems = [
     {
-      to: "/",
-      label: "Home / Overview",
-      icon: <Home size={19} />,
+      to: dashboardRoute,
+      label: "Dashboard",
+      icon: <LayoutDashboard size={18} />,
       badge: null
     },
     {
-      to: "/student",
-      label: "Student Portal",
-      icon: <GraduationCap size={19} />,
-      badge: role === 'student' ? `${queries.length}` : null
+      to: "/ask",
+      label: "Ask Query",
+      icon: <PlusCircle size={18} />,
+      badge: "Instant",
+      badgeColor: 'var(--primary)',
+      textColor: 'var(--bg-main)'
     },
     {
-      to: "/faculty",
-      label: "Faculty Dashboard",
-      icon: <Users size={19} />,
-      badge: pendingCount > 0 ? `${pendingCount} new` : null,
-      badgeColor: '#ef4444'
+      to: "/queries",
+      label: "My Queries",
+      icon: <FileQuestion size={18} />,
+      badge: queries.length ? `${queries.length}` : null
     },
     {
-      to: "/admin",
-      label: "Admin Governance",
-      icon: <ShieldCheck size={19} />,
-      badge: "Full Control",
-      badgeColor: '#2878E5'
+      to: "/notifications",
+      label: "Notifications",
+      icon: <Bell size={18} />,
+      badge: pendingCount > 0 ? `${pendingCount}` : null,
+      badgeColor: 'var(--warning)'
+    },
+    {
+      to: "/faq",
+      label: "FAQ & Resources",
+      icon: <HelpCircle size={18} />,
+      badge: null
+    },
+    {
+      to: "/profile",
+      label: "Profile & Settings",
+      icon: <User size={18} />,
+      badge: null
     },
     {
       to: "/ai-lab",
       label: "AI Algorithm Lab",
-      icon: <Cpu size={19} />,
-      badge: "Modules 1-4",
-      badgeColor: '#2878E5'
+      icon: <Cpu size={18} />,
+      badge: "Modules 1-4"
     },
     {
       to: "/viva",
       label: "Architecture & Viva",
-      icon: <BookOpen size={19} />,
+      icon: <BookOpen size={18} />,
       badge: "Q&A"
     }
   ];
@@ -73,9 +89,9 @@ export function Sidebar() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.4)',
+            background: 'rgba(0, 0, 0, 0.55)',
             zIndex: 40,
-            backdropFilter: 'blur(3px)'
+            backdropFilter: 'blur(4px)'
           }}
         />
       )}
@@ -85,32 +101,34 @@ export function Sidebar() {
         className={`sidebar-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}
         style={{
           width: '260px',
-          background: 'var(--bg-card)',
+          background: 'var(--bg-sidebar)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderRight: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          padding: '1.25rem 1rem',
+          padding: '1.5rem 1.15rem',
           flexShrink: 0,
           transition: 'transform 250ms ease-out, background 200ms, border-color 200ms',
           zIndex: 45
         }}
       >
         <div>
-          {/* Section: Main Navigation */}
+          {/* Main Navigation */}
           <div style={{ marginBottom: '1.5rem' }}>
             <p
               style={{
                 fontSize: '0.68rem',
                 fontWeight: 700,
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.06em',
                 color: 'var(--text-muted)',
                 padding: '0 0.75rem',
-                marginBottom: '0.5rem'
+                marginBottom: '0.65rem'
               }}
             >
-              Navigation
+              Main Menu
             </p>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {navItems.map((item) => (
@@ -123,15 +141,16 @@ export function Sidebar() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '10px',
-                    fontSize: '0.9rem',
+                    padding: '0.68rem 0.95rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.885rem',
                     fontWeight: 600,
                     textDecoration: 'none',
                     transition: 'all 150ms',
                     background: isActive ? 'var(--primary-light)' : 'transparent',
                     color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
-                    border: isActive ? '1px solid var(--primary-glow)' : '1px solid transparent'
+                    border: isActive ? '1px solid var(--border-accent)' : '1px solid transparent',
+                    boxShadow: isActive ? '0 2px 10px var(--primary-glow)' : 'none'
                   })}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -143,10 +162,10 @@ export function Sidebar() {
                       style={{
                         fontSize: '0.68rem',
                         fontWeight: 700,
-                        padding: '2px 7px',
-                        borderRadius: '999px',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-full)',
                         background: item.badgeColor || 'var(--primary-light)',
-                        color: item.badgeColor ? '#ffffff' : 'var(--primary)'
+                        color: item.textColor || 'var(--text-primary)'
                       }}
                     >
                       {item.badge}
@@ -157,56 +176,56 @@ export function Sidebar() {
             </nav>
           </div>
 
-          {/* Section: Live Query Pipeline Status */}
+          {/* Real-time Query Pipeline Overview */}
           <div
+            className="glass-card"
             style={{
-              background: 'var(--bg-subtle)',
-              borderRadius: '12px',
-              padding: '1rem',
-              border: '1px solid var(--border)',
-              marginTop: '1rem'
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.15rem',
+              marginBottom: '1rem',
+              border: '1px solid var(--border)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
               <Layers size={16} color="var(--primary)" />
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>Query Pipeline Status</span>
+              <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Resolution Engine
+              </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.785rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.785rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
                 <span>Pending Review</span>
-                <span style={{ fontWeight: 700, color: '#f59e0b' }}>{pendingCount}</span>
+                <span style={{ fontWeight: 700, color: 'var(--warning)' }}>{pendingCount}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-                <span>Faculty Answered</span>
-                <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{answeredCount}</span>
+                <span>Answered</span>
+                <span style={{ fontWeight: 700, color: 'var(--info)' }}>{answeredCount}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-                <span>Fully Resolved</span>
+                <span>Resolved</span>
                 <span style={{ fontWeight: 700, color: 'var(--success)' }}>{resolvedCount}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Section: Project AI Attribution */}
-        <div
-          style={{
-            background: 'var(--success-light)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '0.85rem',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--success)', fontWeight: 700, fontSize: '0.8rem' }}>
-            <Sparkles size={15} />
-            <span>AI Modules Verified</span>
-          </div>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Modules 1, 2, 3 & 4 executable algorithms loaded client-side.
-          </p>
-        </div>
+        {/* Bottom Actions: Logout */}
+        {currentUser && (
+          <button
+            onClick={logout}
+            className="btn btn-secondary btn-sm btn-pill"
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              color: 'var(--danger)',
+              borderColor: 'var(--border)'
+            }}
+          >
+            <LogOut size={15} />
+            <span>Sign Out</span>
+          </button>
+        )}
       </aside>
 
       <style>{`

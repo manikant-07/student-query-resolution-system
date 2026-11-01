@@ -9,6 +9,12 @@ import { OnboardingModal } from './components/auth/OnboardingModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 import { LandingPage } from './pages/LandingPage';
+import { AuthPage } from './pages/AuthPage';
+import { AskQueryPage } from './pages/AskQueryPage';
+import { MyQueriesPage } from './pages/MyQueriesPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { FAQPage } from './pages/FAQPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { FacultyDashboard } from './pages/FacultyDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -38,11 +44,28 @@ function AppLayout() {
         {/* Routed Pages */}
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<AuthPage />} />
           <Route 
             path="/student" 
             element={
               <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
                 <StudentDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/ask" 
+            element={
+              <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                <AskQueryPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/queries" 
+            element={
+              <ProtectedRoute allowedRoles={['student', 'faculty', 'admin']}>
+                <MyQueriesPage />
               </ProtectedRoute>
             } 
           />
@@ -62,6 +85,9 @@ function AppLayout() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/ai-lab" element={<AILabPage />} />
           <Route path="/viva" element={<ArchitectureVivaPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
