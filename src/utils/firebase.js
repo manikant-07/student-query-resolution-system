@@ -67,12 +67,13 @@ export { auth, db, googleProvider };
 export async function signInWithGoogle() {
   if (!isFirebaseConfigured || !auth || !googleProvider) {
     // Graceful fallback for local development when .env is pending configuration
-    console.warn('Firebase credentials not configured. Simulating Google Sign-In for demo.');
+    const inputEmail = window.prompt("Enter Google Email (e.g. student@gmail.com):") || 'student@gmail.com';
+    const inputName = window.prompt("Enter Full Name:", inputEmail.split('@')[0]) || inputEmail.split('@')[0];
     const demoGoogleUser = {
-      uid: 'google-demo-' + Math.random().toString(36).substring(2, 9),
-      displayName: 'Manikant Rajpoot',
-      email: 'manikant.student@gmail.com',
-      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      uid: 'google-demo-' + btoa(inputEmail).replace(/=/g, '').substring(0, 16),
+      displayName: inputName,
+      email: inputEmail,
+      photoURL: null, // Always neutral initials avatar, never random stock photos
     };
     return {
       user: demoGoogleUser,

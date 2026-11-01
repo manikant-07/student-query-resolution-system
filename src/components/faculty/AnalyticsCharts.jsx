@@ -33,9 +33,9 @@ export function AnalyticsCharts() {
       counts[q.status] = (counts[q.status] || 0) + 1;
     });
     return [
-      { name: 'Pending', value: counts.Pending, color: '#f59e0b' },
-      { name: 'Answered', value: counts.Answered, color: '#2563eb' },
-      { name: 'Resolved', value: counts.Resolved, color: '#10b981' }
+      { name: 'Pending', value: counts.Pending, color: '#C58B58' },
+      { name: 'Answered', value: counts.Answered, color: '#173F35' },
+      { name: 'Resolved', value: counts.Resolved, color: '#1B5E43' }
     ];
   }, [queries]);
 
@@ -96,8 +96,8 @@ export function AnalyticsCharts() {
         {/* Queries by Category */}
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '1rem' }}>
-            <BarChart3 size={18} color="#2563eb" />
-            <h4 style={{ fontSize: '1rem', color: '#0f172a' }}>Queries by Academic Category</h4>
+            <BarChart3 size={18} color="var(--primary)" />
+            <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>Queries by Academic Category</h4>
           </div>
           <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer>
@@ -105,7 +105,7 @@ export function AnalyticsCharts() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="var(--primary)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -114,8 +114,8 @@ export function AnalyticsCharts() {
         {/* Queries by Status (Pie) */}
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '1rem' }}>
-            <PieIcon size={18} color="#7c3aed" />
-            <h4 style={{ fontSize: '1rem', color: '#0f172a' }}>Query Resolution Status</h4>
+            <PieIcon size={18} color="var(--accent-copper)" />
+            <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>Query Resolution Status</h4>
           </div>
           <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer>

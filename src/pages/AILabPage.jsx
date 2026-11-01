@@ -38,11 +38,12 @@ export function AILabPage() {
                   width: 40,
                   height: 40,
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                  background: 'var(--primary)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(23, 63, 53, 0.2)'
                 }}
               >
                 <Cpu size={22} />

@@ -16,9 +16,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT NOT NULL UNIQUE,
     enrollment_number TEXT,
     department TEXT,
+    course TEXT DEFAULT 'B.Tech - Artificial Intelligence & Data Science',
     semester TEXT,
     role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'faculty', 'admin')),
     avatar_url TEXT,
+    is_profile_complete BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

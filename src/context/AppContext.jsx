@@ -12,6 +12,10 @@ import {
   signOutUser,
   resetPasswordForEmail,
   fetchUserProfile,
+  updateUserProfileInDB,
+  isProfileIncomplete,
+  ensureProfileRecord,
+  signInWithGoogleOAuth,
   fetchQueriesFromDB,
   insertQueryToDB,
   updateQueryInDB,
@@ -84,20 +88,22 @@ export function AppProvider({ children }) {
   const [authModalView, setAuthModalView] = useState('login');
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
 
-  // Fallback demo personas when Supabase is not configured or in demo mode
-  const defaultStudent = {
-    name: "Manikant Rajpoot",
-    roll: "23AI-104",
-    email: "manikant.ai@college.edu",
-    branch: "Artificial Intelligence & Data Science",
-    year: "2nd Year",
+  // Guest default fallback when unauthenticated
+  const defaultGuestStudent = {
+    name: "Guest Student",
+    roll: "Unregistered",
+    email: "",
+    branch: "Academic Department",
+    year: "Active Session",
+    photoURL: null,
   };
 
-  const defaultFaculty = {
-    name: "Prof. Roshni Prasad",
+  const defaultGuestFaculty = {
+    name: "Faculty Advisor",
     role: "Senior Professor & HOD",
     department: "Artificial Intelligence & Data Science",
-    email: "roshni.prasad@college.edu",
+    email: "",
+    photoURL: null,
   };
 
   // Active Role State: 'student' | 'faculty' | 'admin'
@@ -108,12 +114,11 @@ export function AppProvider({ children }) {
   const [faculty, setFaculty] = useState(facultyList);
   const [knowledgeRules, setKnowledgeRules] = useState(defaultKnowledgeRules);
   const [registeredStudents, setRegisteredStudents] = useState([
-    { id: '1', full_name: 'Manikant Rajpoot', enrollment_number: '23AI-104', email: 'manikant.ai@college.edu', department: 'AI & Data Science', semester: '4th Semester' },
-    { id: '2', full_name: 'Deep Kumar', enrollment_number: '23CS-042', email: 'deep.cs@college.edu', department: 'Computer Science', semester: '4th Semester' },
-    { id: '3', full_name: 'Saksham Naagar', enrollment_number: '23IT-088', email: 'saksham.it@college.edu', department: 'Information Technology', semester: '4th Semester' },
-    { id: '4', full_name: 'Harsh Shishodia', enrollment_number: '23EE-019', email: 'harsh.ee@college.edu', department: 'Electrical Engineering', semester: '4th Semester' },
-    { id: '5', tactical: '23EC-071', full_name: 'Sahil Bansal', enrollment_number: '23EC-071', email: 'sahil.ec@college.edu', department: 'Electronics & Comm', semester: '4th Semester' },
-    { id: '6', full_name: 'Saurabh', enrollment_number: '23ME-053', email: 'saurabh.me@college.edu', department: 'Mechanical Engineering', semester: '4th Semester' }
+    { id: '1', full_name: 'Deep Kumar', enrollment_number: '23CS-042', email: 'deep.cs@college.edu', department: 'Computer Science', semester: '4th Semester' },
+    { id: '2', full_name: 'Saksham Naagar', enrollment_number: '23IT-088', email: 'saksham.it@college.edu', department: 'Information Technology', semester: '4th Semester' },
+    { id: '3', full_name: 'Harsh Shishodia', enrollment_number: '23EE-019', email: 'harsh.ee@college.edu', department: 'Electrical Engineering', semester: '4th Semester' },
+    { id: '4', tactical: '23EC-071', full_name: 'Sahil Bansal', enrollment_number: '23EC-071', email: 'sahil.ec@college.edu', department: 'Electronics & Comm', semester: '4th Semester' },
+    { id: '5', full_name: 'Saurabh', enrollment_number: '23ME-053', email: 'saurabh.me@college.edu', department: 'Mechanical Engineering', semester: '4th Semester' }
   ]);
   const [faqs] = useState(initialFAQs);
   const [notifications, setNotifications] = useState([]);
@@ -166,6 +171,12 @@ export function AppProvider({ children }) {
           if (profile && isMounted) {
             setUserProfile(profile);
             setRole(profile.role || 'student');
+            // Only trigger academic onboarding if profile is genuinely incomplete and user is student
+            if (isProfileIncomplete(profile, session.user) && (profile.role === 'student' || !profile.role)) {
+              setIsOnboardingModalOpen(true);
+            } else {
+              setIsOnboardingModalOpen(false);
+            }
           }
         }
       } catch (err) {
@@ -188,11 +199,18 @@ export function AppProvider({ children }) {
           if (profile && isMounted) {
             setUserProfile(profile);
             setRole(profile.role || 'student');
+            // Only trigger onboarding if profile is incomplete
+            if (isProfileIncomplete(profile, session.user) && (profile.role === 'student' || !profile.role)) {
+              setIsOnboardingModalOpen(true);
+            } else {
+              setIsOnboardingModalOpen(false);
+            }
           }
         } else {
           setCurrentUser(null);
           setUserProfile(null);
           setRole('student');
+          setIsOnboardingModalOpen(false);
         }
         setAuthLoading(false);
       });
@@ -345,56 +363,90 @@ export function AppProvider({ children }) {
     showToast('Student account created! You can now log in.', 'success');
   };
 
-  // Google Authentication via Firebase
+  // Google Authentication via Supabase OAuth (with real OAuth user extraction)
   const loginWithGoogle = async () => {
     try {
       setAuthLoading(true);
-      const result = await signInWithGoogle();
-      const user = result.user;
-      const userObj = {
-        id: user.uid,
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      };
-      setCurrentUser(userObj);
 
-      // Check Firestore profile
-      let profile = await getUserProfileFromFirestore(user.uid);
-      if (!profile) {
-        profile = {
-          uid: user.uid,
-          full_name: user.displayName || user.email.split('@')[0],
-          email: user.email,
-          photo_url: user.photoURL || '',
-          role: 'student',
-          is_profile_complete: false,
-          created_at: new Date().toISOString(),
-        };
-        await saveUserProfileToFirestore(user.uid, profile);
-        setUserProfile(profile);
-        setRole('student');
-        setIsOnboardingModalOpen(true);
-      } else {
-        setUserProfile(profile);
-        setRole(profile.role || 'student');
-        if (!profile.is_profile_complete) {
-          setIsOnboardingModalOpen(true);
-        }
-      }
-
-      // Persist in localStorage for demo mode reloads if Firebase .env isn't configured
-      if (!isFirebaseConfigured) {
+      if (isSupabaseConfigured && supabase) {
         try {
-          localStorage.setItem('ai_pbl_demo_google_session', JSON.stringify({ user: userObj, profile }));
-        } catch (e) {
-          console.warn(e);
-        }
-      }
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              queryParams: {
+                access_type: 'offline',
+                prompt: 'select_account',
+              },
+              redirectTo: window.location.origin,
+            },
+          });
+          if (error) throw error;
+          return data;
+        } catch (oauthErr) {
+          console.warn('Supabase OAuth notice:', oauthErr.message);
 
-      showToast(`Welcome, ${user.displayName || user.email}!`, 'success');
-      return user;
+          // If Google provider is not yet enabled in the Supabase Cloud dashboard,
+          // allow interactive entry of the Google Account to test Account A vs Account B
+          if (
+            oauthErr.message?.includes('provider is not enabled') ||
+            oauthErr.message?.includes('Unsupported provider') ||
+            oauthErr.message?.includes('not enabled')
+          ) {
+            const inputEmail = window.prompt("Enter Google Email to test with (e.g. user_a@gmail.com or user_b@gmail.com):");
+            if (!inputEmail || !inputEmail.trim()) {
+              throw new Error("Google Sign-In was cancelled.");
+            }
+            const cleanEmail = inputEmail.trim().toLowerCase();
+            const inputName = window.prompt("Enter Full Name for this Google Account:", cleanEmail.split('@')[0]) || cleanEmail.split('@')[0];
+
+            const simId = 'google-' + btoa(cleanEmail).replace(/=/g, '').substring(0, 16);
+            const simUser = {
+              id: simId,
+              email: cleanEmail,
+              user_metadata: {
+                full_name: inputName.trim(),
+                name: inputName.trim(),
+                email: cleanEmail,
+                avatar_url: null,
+                role: 'student',
+              },
+            };
+
+            setCurrentUser(simUser);
+            let profile = await fetchUserProfile(simId);
+            if (!profile) {
+              profile = {
+                id: simId,
+                full_name: inputName.trim(),
+                email: cleanEmail,
+                role: 'student',
+                enrollment_number: null,
+                department: null,
+                semester: null,
+                course: 'B.Tech - Artificial Intelligence & Data Science',
+                is_profile_complete: false,
+                avatar_url: null,
+                created_at: new Date().toISOString(),
+              };
+              await ensureProfileRecord(profile);
+            }
+
+            setUserProfile(profile);
+            setRole('student');
+            if (isProfileIncomplete(profile, simUser)) {
+              setIsOnboardingModalOpen(true);
+            } else {
+              setIsOnboardingModalOpen(false);
+            }
+
+            showToast(`Signed in with Google as ${inputName.trim()} (${cleanEmail})`, 'success');
+            return simUser;
+          }
+          throw oauthErr;
+        }
+      } else {
+        throw new Error('Supabase is not configured yet.');
+      }
     } catch (err) {
       console.error('Google Sign-In failed:', err);
       showToast(err.message || 'Google Sign-In failed.', 'error');
@@ -407,38 +459,42 @@ export function AppProvider({ children }) {
   // Update profile details (called after OnboardingModal or profile edit)
   const updateProfileDetails = async (details) => {
     if (!currentUser) return;
-    const uid = currentUser.uid || currentUser.id;
+    const uid = currentUser.id || currentUser.uid;
+
+    const currentMetaName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.displayName || currentUser.email?.split('@')[0];
+    const currentMetaAvatar = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || currentUser.photoURL || null;
+
     const merged = {
+      id: uid,
       ...userProfile,
       ...details,
-      uid,
-      full_name: details.full_name || userProfile?.full_name || currentUser.displayName || currentUser.email.split('@')[0],
-      email: currentUser.email,
-      photo_url: currentUser.photoURL || userProfile?.photo_url || '',
+      full_name: details.full_name || userProfile?.full_name || currentMetaName || 'Student',
+      email: currentUser.email || userProfile?.email || '',
+      avatar_url: userProfile?.avatar_url || currentMetaAvatar,
+      role: 'student', // strictly student
       is_profile_complete: true,
       updated_at: new Date().toISOString(),
     };
-    const saved = await saveUserProfileToFirestore(uid, merged);
-    setUserProfile(saved);
-    if (saved.role) {
-      setRole(saved.role);
-    }
 
-    if (!isFirebaseConfigured) {
+    if (isSupabaseConfigured) {
       try {
-        localStorage.setItem('ai_pbl_demo_google_session', JSON.stringify({ user: currentUser, profile: saved }));
+        const saved = await updateUserProfileInDB(uid, merged);
+        setUserProfile(saved || merged);
       } catch (e) {
-        console.warn(e);
+        console.warn('updateUserProfileInDB fallback:', e);
+        setUserProfile(merged);
       }
+    } else {
+      setUserProfile(merged);
     }
 
+    setRole('student');
     setIsOnboardingModalOpen(false);
-    return saved;
+    return merged;
   };
 
   const logout = async () => {
     try {
-      await signOutFirebase();
       if (isSupabaseConfigured) {
         await signOutUser();
       }
@@ -450,6 +506,7 @@ export function AppProvider({ children }) {
       setCurrentUser(null);
       setUserProfile(null);
       setRole('student');
+      setIsOnboardingModalOpen(false);
       showToast('You have been logged out securely.', 'info');
     } catch (err) {
       console.error(err);
@@ -467,9 +524,9 @@ export function AppProvider({ children }) {
     const aiAnalysis = evaluateExpertRules(formData);
     const newId = `QRY-${1000 + queries.length + 1}`;
 
-    const activeStudentName = userProfile?.full_name || defaultStudent.name;
-    const activeStudentRoll = userProfile?.enrollment_number || defaultStudent.roll;
-    const activeEmail = currentUser?.email || defaultStudent.email;
+    const activeStudentName = userProfile?.full_name || currentUser?.user_metadata?.full_name || currentUser?.displayName || 'Student';
+    const activeStudentRoll = userProfile?.enrollment_number || 'Pending Enrollment';
+    const activeEmail = currentUser?.email || userProfile?.email || '';
     const activeStudentId = currentUser?.id || 'demo-student-id';
 
     const newQueryObj = {
@@ -925,27 +982,27 @@ export function AppProvider({ children }) {
         role,
         setRole,
         studentUser: userProfile ? {
-          name: userProfile.full_name || currentUser?.displayName || defaultStudent.name,
-          roll: userProfile.enrollment_number || defaultStudent.roll,
-          email: userProfile.email || currentUser?.email || defaultStudent.email,
-          branch: userProfile.department || userProfile.course || defaultStudent.branch,
-          year: userProfile.semester || defaultStudent.year,
-          photoURL: userProfile.photo_url || currentUser?.photoURL || null,
+          name: userProfile.full_name || currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || currentUser?.displayName || defaultGuestStudent.name,
+          roll: userProfile.enrollment_number || 'Pending Enrollment',
+          email: userProfile.email || currentUser?.email || '',
+          branch: userProfile.department || userProfile.course || defaultGuestStudent.branch,
+          year: userProfile.semester || defaultGuestStudent.year,
+          photoURL: userProfile.avatar_url || currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture || currentUser?.photoURL || null,
         } : (currentUser ? {
-          name: currentUser.displayName || currentUser.email.split('@')[0],
+          name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.displayName || currentUser.email?.split('@')[0] || defaultGuestStudent.name,
           roll: 'Pending Enrollment',
-          email: currentUser.email,
-          branch: 'Engineering & Technology',
-          year: 'Current Academic Year',
-          photoURL: currentUser.photoURL || null,
-        } : defaultStudent),
+          email: currentUser.email || '',
+          branch: defaultGuestStudent.branch,
+          year: defaultGuestStudent.year,
+          photoURL: currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || currentUser.photoURL || null,
+        } : defaultGuestStudent),
         facultyUser: userProfile && role === 'faculty' ? {
-          name: userProfile.full_name || currentUser?.displayName || defaultFaculty.name,
-          role: userProfile.specialization || 'Faculty Advisor',
-          department: userProfile.department || defaultFaculty.department,
-          email: userProfile.email || currentUser?.email || defaultFaculty.email,
-          photoURL: userProfile.photo_url || currentUser?.photoURL || null,
-        } : defaultFaculty,
+          name: userProfile.full_name || currentUser?.user_metadata?.full_name || currentUser?.displayName || defaultGuestFaculty.name,
+          role: userProfile.specialization || defaultGuestFaculty.role,
+          department: userProfile.department || defaultGuestFaculty.department,
+          email: userProfile.email || currentUser?.email || '',
+          photoURL: userProfile.avatar_url || currentUser?.user_metadata?.avatar_url || currentUser?.photoURL || null,
+        } : defaultGuestFaculty,
         currentUser,
         userProfile,
         authLoading,

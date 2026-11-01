@@ -734,7 +734,7 @@ export function AdminDashboard() {
                         <span>{d.resolved}/{d.total} ({percent}%)</span>
                       </div>
                       <div style={{ height: '8px', background: 'var(--border)', borderRadius: '999px', overflow: 'hidden' }}>
-                        <div style={{ width: `${percent}%`, height: '100%', background: 'linear-gradient(90deg, #2563eb, #7c3aed)', borderRadius: '999px' }} />
+                        <div style={{ width: `${percent}%`, height: '100%', background: 'var(--primary)', borderRadius: '999px' }} />
                       </div>
                     </div>
                   );

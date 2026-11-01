@@ -54,7 +54,7 @@ export function Sidebar() {
       label: "AI Algorithm Lab",
       icon: <Cpu size={19} />,
       badge: "Modules 1-4",
-      badgeColor: '#7c3aed'
+      badgeColor: 'var(--accent-copper)'
     },
     {
       to: "/viva",

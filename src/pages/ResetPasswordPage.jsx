@@ -59,7 +59,7 @@ export function ResetPasswordPage() {
               width: 52,
               height: 52,
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+              background: 'var(--primary)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',

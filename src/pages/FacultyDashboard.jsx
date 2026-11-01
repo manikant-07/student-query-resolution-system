@@ -5,6 +5,7 @@ import { FacultyReplyModal } from '../components/faculty/FacultyReplyModal';
 import { CSPOptimizerModal } from '../components/faculty/CSPOptimizerModal';
 import { QueryDetailModal } from '../components/student/QueryDetailModal';
 import { AnalyticsCharts } from '../components/faculty/AnalyticsCharts';
+import { UserAvatar } from '../components/common/UserAvatar';
 import {
   Users,
   Cpu,
@@ -94,42 +95,23 @@ export function FacultyDashboard() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
-              overflow: 'hidden'
-            }}
-          >
-            {facultyUser?.photoURL ? (
-              <img
-                src={facultyUser.photoURL}
-                alt={facultyUser.name}
-                referrerPolicy="no-referrer"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <Users size={30} />
-            )}
-          </div>
+          <UserAvatar
+            user={currentUser}
+            name={facultyUser?.name}
+            photoUrl={facultyUser?.photoURL}
+            size="lg"
+          />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <h2 style={{ fontSize: '1.45rem', color: 'var(--text-primary)' }}>
+              <h2 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
                 {facultyUser.name}
               </h2>
-              <span style={{ fontSize: '0.75rem', background: 'var(--accent-purple-light)', color: 'var(--accent-purple)', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>
-                HOD • Faculty Portal
+              <span style={{ fontSize: '0.72rem', background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>
+                Faculty Resolution Desk
               </span>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-              {facultyUser.role} • {facultyUser.department} • {facultyUser.email}
+            <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+              {facultyUser.role} • {facultyUser.department} {facultyUser.email ? `• ${facultyUser.email}` : ''}
             </p>
           </div>
         </div>

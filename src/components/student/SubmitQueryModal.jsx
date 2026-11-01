@@ -265,8 +265,8 @@ export function SubmitQueryModal({ isOpen, onClose }) {
         {aiEvaluation && (formData.subject.length > 5 || formData.description.length > 10) && (
           <div
             style={{
-              background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)',
-              border: '1px solid #bfdbfe',
+              background: 'var(--primary-light)',
+              border: '1px solid var(--border)',
               borderRadius: '12px',
               padding: '1rem',
               marginBottom: '1.25rem',
@@ -274,16 +274,17 @@ export function SubmitQueryModal({ isOpen, onClose }) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e40af', fontWeight: 700, fontSize: '0.875rem' }}>
-                <Sparkles size={16} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.875rem' }}>
+                <Sparkles size={16} color="var(--accent-copper)" />
                 <span>AI Live Diagnostic & Policy Suggestion</span>
               </div>
               <span
                 style={{
                   fontSize: '0.725rem',
                   fontWeight: 700,
-                  background: '#dbeafe',
-                  color: '#1d4ed8',
+                  background: 'var(--bg-card)',
+                  color: 'var(--primary)',
+                  border: '1px solid var(--border)',
                   padding: '2px 8px',
                   borderRadius: '999px'
                 }}

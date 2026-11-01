@@ -27,8 +27,8 @@ export function FAQSection() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <HelpCircle size={20} color="#2563eb" />
-            <h3 style={{ fontSize: '1.25rem', color: '#0f172a' }}>
+            <HelpCircle size={20} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
               Academic FAQ Knowledge Base
             </h3>
           </div>
@@ -60,9 +60,9 @@ export function FAQSection() {
             style={{
               padding: '0.35rem 0.85rem',
               borderRadius: '999px',
-              border: selectedCategory === cat ? '1px solid #2563eb' : '1px solid #e2e8f0',
-              background: selectedCategory === cat ? '#2563eb' : '#ffffff',
-              color: selectedCategory === cat ? '#ffffff' : '#475569',
+              border: selectedCategory === cat ? '1px solid var(--primary)' : '1px solid var(--border)',
+              background: selectedCategory === cat ? 'var(--primary)' : 'var(--bg-card)',
+              color: selectedCategory === cat ? '#ffffff' : 'var(--text-secondary)',
               fontSize: '0.8rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -111,32 +111,32 @@ export function FAQSection() {
                       style={{
                         fontSize: '0.7rem',
                         fontWeight: 700,
-                        background: '#eff6ff',
-                        color: '#2563eb',
+                        background: 'var(--primary-light)',
+                        color: 'var(--primary)',
                         padding: '2px 8px',
                         borderRadius: '6px'
                       }}
                     >
                       {faq.category}
                     </span>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0f172a' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                       {faq.question}
                     </span>
                   </div>
-                  <div style={{ color: '#94a3b8' }}>
+                  <div style={{ color: 'var(--text-muted)' }}>
                     {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </div>
                 </div>
 
                 {isExpanded && (
-                  <div style={{ padding: '0 1.15rem 1rem 1.15rem', borderTop: '1px solid #edf2f7', paddingTop: '0.75rem' }}>
-                    <p style={{ fontSize: '0.885rem', color: '#334155', lineHeight: 1.6 }}>
+                  <div style={{ padding: '0 1.15rem 1rem 1.15rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.75rem' }}>
+                    <p style={{ fontSize: '0.885rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                       {faq.answer}
                     </p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem', fontSize: '0.75rem', color: '#64748b' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <BookOpen size={13} color="#2563eb" />
+                        <BookOpen size={13} color="var(--primary)" />
                         Reference: <strong>{faq.policyRef || 'Academic Handbook'}</strong>
                       </span>
                       {faq.keywords && (

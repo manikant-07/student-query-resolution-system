@@ -1,44 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { useApp } from '../../context/AppContext';
-import { 
-  GraduationCap, 
-  Briefcase, 
-  Building, 
-  Calendar, 
-  CheckCircle2, 
-  AlertCircle, 
-  BookOpen, 
+import { UserAvatar } from '../common/UserAvatar';
+import {
+  GraduationCap,
+  Briefcase,
+  Building,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  BookOpen,
   Sparkles,
-  UserCheck
+  ShieldCheck
 } from 'lucide-react';
 
 export function OnboardingModal({ isOpen, onClose }) {
   const { currentUser, userProfile, updateProfileDetails, showToast } = useApp();
 
-  const [role, setRole] = useState('student');
+  const [fullName, setFullName] = useState('');
   const [enrollmentNumber, setEnrollmentNumber] = useState('');
   const [course, setCourse] = useState('B.Tech - Artificial Intelligence & Data Science');
   const [department, setDepartment] = useState('Artificial Intelligence & Data Science');
   const [semester, setSemester] = useState('4th Semester');
-  const [specialization, setSpecialization] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Prefill available information from Google Auth / current profile
   useEffect(() => {
-    if (userProfile) {
-      if (userProfile.role) setRole(userProfile.role);
-      if (userProfile.enrollment_number) setEnrollmentNumber(userProfile.enrollment_number);
-      if (userProfile.department) setDepartment(userProfile.department);
-      if (userProfile.course) setCourse(userProfile.course);
-      if (userProfile.semester) setSemester(userProfile.semester);
+    const activeName = (
+      userProfile?.full_name ||
+      currentUser?.displayName ||
+      currentUser?.user_metadata?.full_name ||
+      currentUser?.user_metadata?.name ||
+      currentUser?.email?.split('@')[0] ||
+      ''
+    );
+    setFullName(activeName);
+
+    if (userProfile?.enrollment_number) {
+      setEnrollmentNumber(userProfile.enrollment_number);
     }
-  }, [userProfile]);
+    if (userProfile?.department) {
+      setDepartment(userProfile.department);
+    }
+    if (userProfile?.course) {
+      setCourse(userProfile.course);
+    }
+    if (userProfile?.semester) {
+      setSemester(userProfile.semester);
+    }
+  }, [userProfile, currentUser]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!enrollmentNumber.trim()) {
-      setErrorMsg(role === 'student' ? 'Please enter your Enrollment / Roll Number.' : 'Please enter your Faculty / Employee ID.');
+      setErrorMsg('Please enter your official Enrollment / Roll Number.');
+      return;
+    }
+    if (!fullName.trim()) {
+      setErrorMsg('Please confirm your full student name.');
       return;
     }
 
@@ -47,109 +67,85 @@ export function OnboardingModal({ isOpen, onClose }) {
       setErrorMsg('');
 
       await updateProfileDetails({
-        enrollment_number: enrollmentNumber.trim(),
+        full_name: fullName.trim(),
+        enrollment_number: enrollmentNumber.trim().toUpperCase(),
         department,
-        course: role === 'student' ? course : 'Faculty / Academic Staff',
-        semester: role === 'student' ? semester : 'N/A',
-        specialization: role === 'faculty' ? specialization : '',
-        role,
+        course,
+        semester,
+        role: 'student', // Strictly 'student' for public Google login onboarding
         is_profile_complete: true,
       });
 
-      showToast('Profile configured successfully! Welcome aboard.', 'success');
+      showToast('Academic profile saved successfully to Supabase! Welcome.', 'success');
       onClose();
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.message || 'Failed to update academic profile.');
+      setErrorMsg(err.message || 'Failed to save academic profile. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const userEmail = currentUser?.email || userProfile?.email || '';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={() => {
-        // Can only close if profile is already complete
+        // Only allow closing if profile is already complete
         if (userProfile?.is_profile_complete) {
           onClose();
         }
       }}
       title="Complete Your Academic Profile"
-      subtitle="Welcome to Student Query Resolution System. Please confirm your academic details to personalize your portal."
-      maxWidth="560px"
+      subtitle="Welcome to the University Student Portal. Please provide your official academic details to complete initial onboarding."
+      maxWidth="540px"
     >
       <form onSubmit={handleSubmit}>
-        {/* User Google Identity Badge */}
-        {currentUser && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.85rem',
-              padding: '0.85rem 1rem',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-              marginBottom: '1.25rem',
-            }}
-          >
-            {currentUser.photoURL ? (
-              <img
-                src={currentUser.photoURL}
-                alt={currentUser.displayName || 'User'}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid var(--primary)',
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  background: 'var(--primary-light)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '1.1rem',
-                }}
-              >
-                {(currentUser.displayName || currentUser.email || 'U').charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                {currentUser.displayName || 'Google Account'}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {currentUser.email}
-              </div>
+        {/* Authenticated Identity Pill */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.85rem',
+            padding: '0.85rem 1rem',
+            background: 'var(--bg-subtle)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            marginBottom: '1.25rem',
+          }}
+        >
+          <UserAvatar
+            user={currentUser}
+            profile={userProfile}
+            size="md"
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.925rem' }}>
+              {fullName || 'Student Account'}
             </div>
-            <div
-              style={{
-                fontSize: '0.7rem',
-                background: 'rgba(16, 185, 129, 0.1)',
-                color: '#10b981',
-                padding: '3px 8px',
-                borderRadius: '999px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-              }}
-            >
-              <CheckCircle2 size={12} />
-              <span>Verified</span>
+            <div style={{ fontSize: '0.785rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {userEmail}
             </div>
           </div>
-        )}
+          <div
+            style={{
+              fontSize: '0.72rem',
+              background: 'var(--success-light)',
+              color: 'var(--success)',
+              border: '1px solid var(--border)',
+              padding: '3px 8px',
+              borderRadius: '999px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+            }}
+          >
+            <ShieldCheck size={13} />
+            <span>Google Verified</span>
+          </div>
+        </div>
 
         {/* Error notification */}
         {errorMsg && (
@@ -172,73 +168,36 @@ export function OnboardingModal({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* Role Selector */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
-            Select Your Role in Institution *
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <button
-              type="button"
-              onClick={() => setRole('student')}
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '10px',
-                border: `2px solid ${role === 'student' ? 'var(--primary)' : 'var(--border)'}`,
-                background: role === 'student' ? 'var(--primary-light)' : 'var(--bg-card)',
-                color: role === 'student' ? 'var(--primary)' : 'var(--text-secondary)',
-                fontWeight: 600,
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'all 150ms',
-              }}
-            >
-              <GraduationCap size={18} />
-              <span>Student</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('faculty')}
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '10px',
-                border: `2px solid ${role === 'faculty' ? 'var(--accent-purple)' : 'var(--border)'}`,
-                background: role === 'faculty' ? 'var(--accent-purple-light)' : 'var(--bg-card)',
-                color: role === 'faculty' ? 'var(--accent-purple)' : 'var(--text-secondary)',
-                fontWeight: 600,
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'all 150ms',
-              }}
-            >
-              <UserCheck size={18} />
-              <span>Faculty Member</span>
-            </button>
-          </div>
+        {/* Full Name Confirmation */}
+        <div className="form-group">
+          <label className="form-label">Full Name *</label>
+          <input
+            type="text"
+            className="form-input"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Official full name"
+            required
+          />
         </div>
 
-        {/* Enrollment / Employee ID */}
+        {/* Enrollment / Roll Number */}
         <div className="form-group">
           <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <Briefcase size={14} />
-            <span>{role === 'student' ? 'Roll / Enrollment Number *' : 'Faculty / Employee ID *'}</span>
+            <span>Enrollment / Roll Number *</span>
           </label>
           <input
             type="text"
             className="form-input"
-            placeholder={role === 'student' ? 'e.g. 23AI-104 or 23CS-042' : 'e.g. FAC-AI-101'}
+            placeholder="e.g. 23AI-104, 23CS-042, 23IT-088"
             value={enrollmentNumber}
             onChange={(e) => setEnrollmentNumber(e.target.value)}
             required
           />
+          <span className="form-hint">
+            Official university registration number issued by the academic registrar.
+          </span>
         </div>
 
         {/* Department */}
@@ -251,6 +210,7 @@ export function OnboardingModal({ isOpen, onClose }) {
             className="form-select"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
+            required
           >
             <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
             <option value="Computer Science & Engineering">Computer Science & Engineering</option>
@@ -262,66 +222,50 @@ export function OnboardingModal({ isOpen, onClose }) {
           </select>
         </div>
 
-        {role === 'student' ? (
-          <>
-            {/* Student Course */}
-            <div className="form-group">
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <BookOpen size={14} />
-                <span>Degree / Course *</span>
-              </label>
-              <select
-                className="form-select"
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-              >
-                <option value="B.Tech - Artificial Intelligence & Data Science">B.Tech - Artificial Intelligence & Data Science</option>
-                <option value="B.Tech - Computer Science & Engineering">B.Tech - Computer Science & Engineering</option>
-                <option value="B.Tech - Information Technology">B.Tech - Information Technology</option>
-                <option value="B.Tech - Electrical Engineering">B.Tech - Electrical Engineering</option>
-                <option value="B.Tech - Electronics & Communication">B.Tech - Electronics & Communication</option>
-                <option value="M.Tech / Dual Degree">M.Tech / Dual Degree</option>
-                <option value="BCA / MCA">BCA / MCA</option>
-              </select>
-            </div>
+        {/* Degree / Course */}
+        <div className="form-group">
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <BookOpen size={14} />
+            <span>Degree / Program *</span>
+          </label>
+          <select
+            className="form-select"
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+            required
+          >
+            <option value="B.Tech - Artificial Intelligence & Data Science">B.Tech - Artificial Intelligence & Data Science</option>
+            <option value="B.Tech - Computer Science & Engineering">B.Tech - Computer Science & Engineering</option>
+            <option value="B.Tech - Information Technology">B.Tech - Information Technology</option>
+            <option value="B.Tech - Electrical Engineering">B.Tech - Electrical Engineering</option>
+            <option value="B.Tech - Electronics & Communication">B.Tech - Electronics & Communication</option>
+            <option value="M.Tech - Advanced Computing & AI">M.Tech - Advanced Computing & AI</option>
+            <option value="BCA / MCA Integrated">BCA / MCA Integrated</option>
+          </select>
+        </div>
 
-            {/* Semester */}
-            <div className="form-group">
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Calendar size={14} />
-                <span>Current Semester *</span>
-              </label>
-              <select
-                className="form-select"
-                value={semester}
-                onChange={(e) => setSemester(e.target.value)}
-              >
-                <option value="1st Semester">1st Semester (Year 1)</option>
-                <option value="2nd Semester">2nd Semester (Year 1)</option>
-                <option value="3rd Semester">3rd Semester (Year 2)</option>
-                <option value="4th Semester">4th Semester (Year 2)</option>
-                <option value="5th Semester">5th Semester (Year 3)</option>
-                <option value="6th Semester">6th Semester (Year 3)</option>
-                <option value="7th Semester">7th Semester (Year 4)</option>
-                <option value="8th Semester">8th Semester (Year 4)</option>
-              </select>
-            </div>
-          </>
-        ) : (
-          <div className="form-group">
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Sparkles size={14} />
-              <span>Specialization / Research Area</span>
-            </label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="e.g. Deep Learning, Cloud Computing, Database Systems"
-              value={specialization}
-              onChange={(e) => setSpecialization(e.target.value)}
-            />
-          </div>
-        )}
+        {/* Current Semester */}
+        <div className="form-group">
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Calendar size={14} />
+            <span>Current Semester *</span>
+          </label>
+          <select
+            className="form-select"
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+            required
+          >
+            <option value="1st Semester">1st Semester (Year 1 - Autumn)</option>
+            <option value="2nd Semester">2nd Semester (Year 1 - Spring)</option>
+            <option value="3rd Semester">3rd Semester (Year 2 - Autumn)</option>
+            <option value="4th Semester">4th Semester (Year 2 - Spring)</option>
+            <option value="5th Semester">5th Semester (Year 3 - Autumn)</option>
+            <option value="6th Semester">6th Semester (Year 3 - Spring)</option>
+            <option value="7th Semester">7th Semester (Year 4 - Autumn)</option>
+            <option value="8th Semester">8th Semester (Year 4 - Spring)</option>
+          </select>
+        </div>
 
         <button
           type="submit"
@@ -329,10 +273,9 @@ export function OnboardingModal({ isOpen, onClose }) {
           style={{ width: '100%', marginTop: '0.75rem', gap: '0.5rem' }}
           disabled={submitting}
         >
-          {submitting ? 'Saving Profile to Firestore...' : 'Confirm Details & Enter Portal'}
+          {submitting ? 'Saving Profile to Supabase...' : 'Confirm Details & Access Student Portal'}
         </button>
       </form>
     </Modal>
   );
 }
-

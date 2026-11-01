@@ -162,9 +162,6 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
             type="button"
             onClick={() => {
               setRoleHint(r.key);
-              if (r.key === 'faculty' && !email) setEmail('roshni.prasad@college.edu');
-              if (r.key === 'student' && !email) setEmail('manikant.ai@college.edu');
-              if (r.key === 'admin' && !email) setEmail('admin@college.edu');
             }}
             style={{
               padding: '0.45rem 0.6rem',
@@ -488,7 +485,7 @@ export function AuthModal({ isOpen, onClose, initialView = 'login' }) {
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. Manikant Rajpoot"
+                placeholder="e.g. Official Student Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required

@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Modal } from '../common/Modal';
 import { StatusBadge, PriorityBadge } from '../common/Badge';
 import { getAttachmentDownloadUrl } from '../../utils/supabaseClient';
+import { UserAvatar } from '../common/UserAvatar';
 import { 
   Sparkles, 
   ThumbsUp, 
@@ -363,6 +364,7 @@ export function QueryDetailModal({ query, isOpen, onClose }) {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <UserAvatar name={reply.author} size="xs" />
                       <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                         {reply.author}
                       </span>

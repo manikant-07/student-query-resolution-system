@@ -86,12 +86,13 @@ export function ArchitectureVivaPage() {
       {/* Page Header */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #6d28d9 100%)',
+          background: 'var(--primary)',
           color: '#ffffff',
-          borderRadius: '20px',
+          borderRadius: '16px',
           padding: '2.5rem 2rem',
           marginBottom: '2rem',
-          boxShadow: 'var(--shadow-md)'
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid rgba(255, 255, 255, 0.15)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.5rem' }}>

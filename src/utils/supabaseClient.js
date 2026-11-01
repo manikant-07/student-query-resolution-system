@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' && process.env) ? process.env : {};
+const supabaseUrl = env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || '';
 
 // Validate if environment variables are populated and not default placeholders
 export const isSupabaseConfigured = Boolean(
@@ -117,6 +118,27 @@ export async function updateAccountPassword(newPassword) {
   return data;
 }
 
+// Google OAuth Sign-In via Supabase Auth
+export async function signInWithGoogleOAuth() {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured yet. Please configure credentials in .env.');
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account',
+      },
+      redirectTo: window.location.origin,
+    },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 // Fetch verified user profile directly from PostgreSQL public.profiles
 export async function fetchUserProfile(userId) {
   if (!isSupabaseConfigured || !userId) return null;
@@ -132,24 +154,40 @@ export async function fetchUserProfile(userId) {
       console.warn('Error fetching profile from DB:', error.message);
     }
 
-    if (data) return data;
+    if (data) {
+      const isComplete = data.is_profile_complete !== undefined && data.is_profile_complete !== null
+        ? Boolean(data.is_profile_complete)
+        : Boolean(data.enrollment_number && data.department && data.semester);
 
-    // Fallback: If trigger did not run yet, construct from active auth metadata and upsert
+      return {
+        ...data,
+        is_profile_complete: isComplete,
+      };
+    }
+
+    // Fallback: If profile row not found in public.profiles yet, extract from active auth user
     const { data: authData } = await supabase.auth.getUser();
     if (authData?.user && authData.user.id === userId) {
       const meta = authData.user.user_metadata || {};
+      const fullName = meta.full_name || meta.name || authData.user.email?.split('@')[0] || 'Student';
+      const avatarUrl = meta.avatar_url || meta.picture || null;
+      const isComplete = Boolean(meta.enrollment_number && meta.department && meta.semester);
+
       const fallbackProfile = {
         id: userId,
-        full_name: meta.full_name || authData.user.email.split('@')[0],
+        full_name: fullName,
         email: authData.user.email,
         enrollment_number: meta.enrollment_number || null,
-        department: meta.department || 'Artificial Intelligence & Data Science',
-        semester: meta.semester || '4th Semester',
+        department: meta.department || null,
+        course: meta.course || 'B.Tech - Artificial Intelligence & Data Science',
+        semester: meta.semester || null,
         role: meta.role === 'admin' ? 'admin' : meta.role === 'faculty' ? 'faculty' : 'student',
+        avatar_url: avatarUrl,
+        is_profile_complete: isComplete,
         created_at: new Date().toISOString(),
       };
 
-      await supabase.from('profiles').upsert(fallbackProfile).select().maybeSingle();
+      await ensureProfileRecord(fallbackProfile);
       return fallbackProfile;
     }
   } catch (err) {
@@ -159,8 +197,98 @@ export async function fetchUserProfile(userId) {
   return null;
 }
 
+// Update profile row in PostgreSQL public.profiles with safe column fallback
+export async function updateUserProfileInDB(userId, updates) {
+  if (!isSupabaseConfigured || !userId) return null;
+
+  try {
+    // 1. Try updating with all fields
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      // If code 42703 (column course or is_profile_complete does not exist yet)
+      if (error.code === '42703') {
+        const safeUpdates = { ...updates };
+        delete safeUpdates.course;
+        delete safeUpdates.is_profile_complete;
+
+        const { data: safeData, error: safeErr } = await supabase
+          .from('profiles')
+          .update(safeUpdates)
+          .eq('id', userId)
+          .select()
+          .maybeSingle();
+
+        if (safeErr) throw safeErr;
+
+        // Also sync to auth user metadata so it persists across reloads
+        await supabase.auth.updateUser({
+          data: {
+            full_name: updates.full_name,
+            enrollment_number: updates.enrollment_number,
+            department: updates.department,
+            course: updates.course,
+            semester: updates.semester,
+            is_profile_complete: true,
+          },
+        }).catch(console.warn);
+
+        return {
+          ...safeData,
+          course: updates.course,
+          is_profile_complete: true,
+        };
+      }
+      throw error;
+    }
+
+    // Also sync to auth user metadata
+    await supabase.auth.updateUser({
+      data: {
+        full_name: updates.full_name,
+        enrollment_number: updates.enrollment_number,
+        department: updates.department,
+        course: updates.course,
+        semester: updates.semester,
+        is_profile_complete: true,
+      },
+    }).catch(console.warn);
+
+    return {
+      ...data,
+      is_profile_complete: true,
+    };
+  } catch (err) {
+    console.error('updateUserProfileInDB error:', err);
+    throw err;
+  }
+}
+
+// Check if student profile is genuinely incomplete (needs missing enrollment / department / semester)
+export function isProfileIncomplete(profile, user) {
+  if (!profile && !user) return false;
+  // If user role is faculty or admin, they do not need student academic onboarding
+  if (profile?.role && profile.role !== 'student') return false;
+
+  const roll = profile?.enrollment_number || user?.user_metadata?.enrollment_number;
+  const dept = profile?.department || user?.user_metadata?.department;
+  const sem = profile?.semester || user?.user_metadata?.semester;
+
+  // Incomplete if enrollment_number, department, or semester is missing or empty
+  if (!roll || !roll.trim() || !dept || !dept.trim() || !sem || !sem.trim()) {
+    return true;
+  }
+
+  return false;
+}
+
 // Ensure profile row exists in public.profiles table
-async function ensureProfileRecord(profileData) {
+export async function ensureProfileRecord(profileData) {
   if (!isSupabaseConfigured || !profileData.id) return;
   try {
     await supabase.from('profiles').upsert(profileData, { onConflict: 'id' });

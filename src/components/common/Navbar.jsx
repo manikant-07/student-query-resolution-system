@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
+import { UserAvatar } from './UserAvatar';
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -81,41 +82,43 @@ export function Navbar() {
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
             <div
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'var(--primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                boxShadow: '0 2px 6px rgba(23, 63, 53, 0.25)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
               }}
             >
-              <Sparkles size={22} />
+              <Sparkles size={20} color="var(--accent-copper)" />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', letterSpacing: '-0.01em' }}>
                   Student Query Resolution System
                 </span>
                 <span
                   style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.68rem',
                     fontWeight: 700,
                     background: 'var(--primary-light)',
                     color: 'var(--primary)',
-                    border: '1px solid var(--primary-glow)',
+                    border: '1px solid var(--border)',
                     padding: '2px 8px',
                     borderRadius: '999px',
-                    textTransform: 'uppercase'
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em'
                   }}
                 >
-                  AI Powered
+                  Academic ERP
                 </span>
               </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                Ask Smarter. Resolve Faster. • College AI Project
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                University Academic Resolution & AI Decision System
               </p>
             </div>
           </Link>
@@ -254,42 +257,14 @@ export function Navbar() {
                 }}
                 className="persona-chip"
               >
-                {currentUser?.photoURL || userProfile?.photo_url ? (
-                  <img
-                    src={currentUser?.photoURL || userProfile?.photo_url}
-                    alt={userProfile?.full_name || currentUser.displayName || 'Google Profile'}
-                    referrerPolicy="no-referrer"
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '1.5px solid var(--primary)',
-                      flexShrink: 0,
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: '50%',
-                      background: role === 'student' ? 'var(--primary-light)' : role === 'admin' ? '#e0e7ff' : 'var(--accent-purple-light)',
-                      color: role === 'student' ? 'var(--primary)' : role === 'admin' ? '#4338ca' : 'var(--accent-purple)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.8rem',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {(userProfile?.full_name || currentUser.displayName || currentUser.email || 'U').charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <UserAvatar
+                  user={currentUser}
+                  profile={userProfile}
+                  size="sm"
+                />
                 <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                    {userProfile?.full_name || currentUser.displayName || currentUser.email}
+                    {userProfile?.full_name || currentUser.displayName || currentUser?.user_metadata?.full_name || currentUser.email}
                   </div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
                     {role.toUpperCase()} • {userProfile?.enrollment_number || 'Google Verified'}
@@ -297,7 +272,7 @@ export function Navbar() {
                 </div>
               </div>
 
-              {userProfile && !userProfile.is_profile_complete && (
+              {role === 'student' && userProfile && !userProfile.is_profile_complete && (
                 <button
                   onClick={openOnboardingModal}
                   className="btn btn-warning btn-sm"
